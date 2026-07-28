@@ -545,6 +545,12 @@ textarea:focus-visible,
   line-height: 1.55;
 }
 
+.source-note a {
+  color: var(--accent-light);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
 .main-panel {
   margin-top: 14px;
 }
@@ -859,6 +865,10 @@ select {
 .price-cell.is-highlighted {
   border-color: rgba(150, 132, 255, 0.5);
   background: rgba(150, 132, 255, 0.1);
+}
+
+.price-cell.is-unavailable {
+  opacity: 0.62;
 }
 
 .price-cell strong {

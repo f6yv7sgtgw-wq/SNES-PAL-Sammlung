@@ -18,9 +18,19 @@ export type Game = {
   publisher: string;
   year: number;
   rarity: 1 | 2 | 3;
-  prices: Record<PriceKey, number>;
+  prices: Record<PriceKey, number | null>;
   cover: string | null;
   sourcePage: number;
+};
+
+export type PriceMeta = {
+  source: string;
+  sourceUrl: string;
+  sourceChecked: string;
+  exchangeRateSource: string;
+  exchangeRateDate: string;
+  usdPerEur: number;
+  missingPriceCount: number;
 };
 
 type OwnedEntry = {
@@ -59,8 +69,24 @@ const euroFormatter = new Intl.NumberFormat("de-DE", {
   currency: "EUR",
 });
 
-function formatEuro(cents: number) {
-  return euroFormatter.format(cents / 100);
+function formatEuro(cents: number | null) {
+  return cents === null ? "–" : euroFormatter.format(cents / 100);
+}
+
+function comparePrices(
+  left: number | null,
+  right: number | null,
+  direction: "asc" | "desc",
+) {
+  if (left === null && right === null) return 0;
+  if (left === null) return 1;
+  if (right === null) return -1;
+  return direction === "asc" ? left - right : right - left;
+}
+
+function formatIsoDate(value: string) {
+  const [year, month, day] = value.slice(0, 10).split("-");
+  return `${day}.${month}.${year}`;
 }
 
 function normalizeSearch(value: string) {
@@ -181,11 +207,25 @@ function PriceGrid({
   highlight?: PriceKey;
 }) {
   return (
-    <div className="price-grid" aria-label={`Richtwerte für ${game.title}`}>
+    <div
+      className="price-grid"
+      aria-label={`Online-Richtwerte für ${game.title}`}
+    >
       {PRICE_KEYS.map((key) => (
         <div
-          className={highlight === key ? "price-cell is-highlighted" : "price-cell"}
+          className={[
+            "price-cell",
+            highlight === key ? "is-highlighted" : "",
+            game.prices[key] === null ? "is-unavailable" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
           key={key}
+          title={
+            game.prices[key] === null
+              ? "Für diesen Zustand liegt kein belastbarer Onlinewert vor."
+              : undefined
+          }
         >
           <span>{CONDITION_LABELS[key]}</span>
           <strong>{formatEuro(game.prices[key])}</strong>
@@ -338,7 +378,7 @@ function GameEditor({
           </label>
 
           <div className="reference-row">
-            <span>Richtwert laut Guide</span>
+            <span>Online-Richtwert</span>
             <strong>{formatEuro(game.prices[condition])}</strong>
           </div>
 
@@ -453,7 +493,13 @@ function GamePicker({
   );
 }
 
-export default function CollectionManager({ games }: { games: Game[] }) {
+export default function CollectionManager({
+  games,
+  priceMeta,
+}: {
+  games: Game[];
+  priceMeta: PriceMeta;
+}) {
   const [activeView, setActiveView] = useState<View>("collection");
   const [state, setState] = useState<CollectionState>(EMPTY_STATE);
   const [hydrated, setHydrated] = useState(false);
@@ -578,9 +624,10 @@ export default function CollectionManager({ games }: { games: Game[] }) {
         return right.game.year - left.game.year;
       }
       if (collectionSort === "value") {
-        return (
-          right.game.prices[right.entry.condition] -
-          left.game.prices[left.entry.condition]
+        return comparePrices(
+          left.game.prices[left.entry.condition],
+          right.game.prices[right.entry.condition],
+          "desc",
         );
       }
       if (collectionSort === "rarity") {
@@ -631,10 +678,18 @@ export default function CollectionManager({ games }: { games: Game[] }) {
         );
       }
       if (catalogSort === "value-low") {
-        return left.prices[catalogPrice] - right.prices[catalogPrice];
+        return comparePrices(
+          left.prices[catalogPrice],
+          right.prices[catalogPrice],
+          "asc",
+        );
       }
       if (catalogSort === "value-high") {
-        return right.prices[catalogPrice] - left.prices[catalogPrice];
+        return comparePrices(
+          left.prices[catalogPrice],
+          right.prices[catalogPrice],
+          "desc",
+        );
       }
       return left.title.localeCompare(right.title, "de");
     });
@@ -655,7 +710,7 @@ export default function CollectionManager({ games }: { games: Game[] }) {
   const referenceValue = Object.entries(state.owned).reduce(
     (sum, [gameId, entry]) => {
       const game = gameById.get(gameId);
-      return sum + (game ? game.prices[entry.condition] : 0);
+      return sum + (game?.prices[entry.condition] ?? 0);
     },
     0,
   );
@@ -749,7 +804,7 @@ export default function CollectionManager({ games }: { games: Game[] }) {
               <div>
                 <div className="title-row">
                   <h1>SNES PAL Sammlung</h1>
-                  <span className="version-badge">Version 0.1</span>
+                  <span className="version-badge">Version 0.2</span>
                 </div>
                 <p>Sammlungsmanager mit 530 PAL-Spielen</p>
               </div>
@@ -811,7 +866,7 @@ export default function CollectionManager({ games }: { games: Game[] }) {
             <small>vollständiger Katalog</small>
           </article>
           <article className="stat-card is-accent">
-            <span>Richtwert</span>
+            <span>Online-Richtwert</span>
             <strong>{hydrated ? formatEuro(referenceValue) : "–"}</strong>
             <small>nach erfasstem Zustand</small>
           </article>
@@ -859,7 +914,7 @@ export default function CollectionManager({ games }: { games: Game[] }) {
             </div>
             <div className="value-list">
               <div>
-                <span>Richtwert der Sammlung</span>
+                <span>Online-Richtwert der Sammlung</span>
                 <strong>{formatEuro(referenceValue)}</strong>
               </div>
               <div>
@@ -871,9 +926,17 @@ export default function CollectionManager({ games }: { games: Game[] }) {
               </div>
             </div>
             <p className="source-note">
-              Die Richtwerte stammen aus dem bereitgestellten Konsolenguide
-              (Stand Juli 2020), ohne Versandkosten. Sie sind keine aktuellen
-              Marktpreise.
+              Online-Richtwerte von{" "}
+              <a href={priceMeta.sourceUrl} rel="noreferrer" target="_blank">
+                {priceMeta.source}
+              </a>{" "}
+              für PAL-Ausgaben, geprüft am{" "}
+              {formatIsoDate(priceMeta.sourceChecked)} und zum EZB-Tageskurs
+              vom {formatIsoDate(priceMeta.exchangeRateDate)} in Euro
+              umgerechnet. Ohne typische Versandkosten. Für{" "}
+              {priceMeta.missingPriceCount} von {games.length * PRICE_KEYS.length}{" "}
+              Zustandswerten veröffentlicht die Quelle keinen Marktwert; dort
+              steht „–“.
             </p>
           </article>
         </section>
@@ -926,7 +989,7 @@ export default function CollectionManager({ games }: { games: Game[] }) {
                   <option value="added">Zuletzt hinzugefügt</option>
                   <option value="title">Titel A–Z</option>
                   <option value="year">Jahr, neu zuerst</option>
-                  <option value="value">Richtwert, hoch zuerst</option>
+                  <option value="value">Onlinewert, hoch zuerst</option>
                   <option value="rarity">Seltenheit</option>
                 </select>
               </label>
@@ -954,7 +1017,7 @@ export default function CollectionManager({ games }: { games: Game[] }) {
                           <strong>{CONDITION_LABELS[entry.condition]}</strong>
                         </div>
                         <div>
-                          <span>Richtwert</span>
+                          <span>Onlinewert</span>
                           <strong>{formatEuro(game.prices[entry.condition])}</strong>
                         </div>
                         <div>

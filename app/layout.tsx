@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "SNES PAL Sammlung",
   description:
-    "Mobiler Sammlungsmanager für 530 europäische SNES-PAL-Spiele mit Richtwerten für fünf Zustände.",
+    "Mobiler Sammlungsmanager für 530 europäische SNES-PAL-Spiele mit aktuellen Online-Richtwerten für fünf Zustände.",
   other: {
     "codex-preview": "development",
   },
