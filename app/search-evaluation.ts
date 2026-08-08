@@ -27,7 +27,7 @@ export type ParserListing = {
   } | null;
 };
 
-export type OfferColor = "green" | "yellow" | "red";
+export type OfferColor = "green" | "yellow" | "orange" | "red" | "unknown";
 export type ShippingStatus = "confirmed" | "unknown" | "pickup-only";
 
 export type EvaluatedOffer = {
@@ -42,6 +42,8 @@ export type EvaluatedOffer = {
   priceCents: number | null;
   shippingCents: number | null;
   totalCents: number | null;
+  comparisonCents: number | null;
+  comparisonIncludesShipping: boolean;
   shippingStatus: ShippingStatus;
   shippingLabel: string;
   condition: SearchPriceKey;
@@ -49,8 +51,10 @@ export type EvaluatedOffer = {
   conditionCertain: boolean;
   referenceCents: number | null;
   differenceCents: number | null;
+  deviationPercent: number | null;
   color: OfferColor;
   reason: string;
+  unsuitableReason: string | null;
   isBundle: boolean;
   bundleCertain: boolean;
   matchCertain: boolean;
@@ -122,6 +126,15 @@ const ROMAN_NUMERALS: Record<string, string> = {
   ix: "9",
   x: "10",
 };
+
+export function buildParserQuery(title: string) {
+  const safeTitle = title
+    .normalize("NFKC")
+    .replace(/[\\/\\\\]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return `SNES ${safeTitle}`.slice(0, 120);
+}
 
 export function normalizeListingText(value: string) {
   return value
@@ -300,6 +313,93 @@ function hardRejectReason(text: string) {
   return found ? `Unpassender Hinweis: ${found}` : null;
 }
 
+function previousUnsuitableReason(offer: EvaluatedOffer) {
+  if (offer.unsuitableReason) return offer.unsuitableReason;
+  return /^(?:Gesuch statt Verkaufsangebot|Nur Verpackung oder Anleitung|Unpassender Hinweis:)/i.test(
+    offer.reason,
+  )
+    ? offer.reason
+    : null;
+}
+
+function priceBand(deviationPercent: number): OfferColor {
+  if (deviationPercent <= 10) return "green";
+  if (deviationPercent <= 25) return "yellow";
+  if (deviationPercent <= 40) return "orange";
+  return "red";
+}
+
+function deviationReason(deviationPercent: number) {
+  if (deviationPercent < 0) {
+    return `${Math.abs(deviationPercent)} % unter dem Richtwert`;
+  }
+  if (deviationPercent > 0) {
+    return `+${deviationPercent} % über dem Richtwert`;
+  }
+  return "Entspricht dem Richtwert";
+}
+
+export function reclassifyEvaluatedOffer(offer: EvaluatedOffer): EvaluatedOffer {
+  const unsuitableReason = previousUnsuitableReason(offer);
+  const comparisonIncludesShipping = offer.totalCents !== null;
+  const comparisonCents = offer.totalCents ?? offer.priceCents;
+  const canCompare =
+    offer.matchCertain &&
+    offer.bundleCertain &&
+    comparisonCents !== null &&
+    comparisonCents > 100 &&
+    offer.referenceCents !== null &&
+    offer.referenceCents > 0;
+  const differenceCents = canCompare
+    ? (offer.referenceCents ?? 0) - (comparisonCents ?? 0)
+    : null;
+  const deviationPercent = canCompare
+    ? Math.round(
+        (((comparisonCents ?? 0) - (offer.referenceCents ?? 0)) /
+          (offer.referenceCents ?? 1)) *
+          100,
+      )
+    : null;
+
+  let color: OfferColor = "unknown";
+  let reason = "Preisvergleich nicht eindeutig möglich";
+  if (unsuitableReason) {
+    color = "red";
+    reason = unsuitableReason;
+  } else if (!offer.matchCertain) {
+    reason = "Zuordnung zum gesuchten Spiel nicht eindeutig";
+  } else if (!offer.bundleCertain) {
+    reason = "Konvolutinhalt nicht vollständig eindeutig";
+  } else if (offer.priceCents !== null && offer.priceCents <= 100) {
+    reason = "Preis von 1 € oder weniger ist wahrscheinlich ein Platzhalter";
+  } else if (comparisonCents === null) {
+    reason = "Angebotspreis fehlt";
+  } else if (offer.referenceCents === null || offer.referenceCents <= 0) {
+    reason = "Für diesen Zustand ist kein Richtwert verfügbar";
+  } else if (deviationPercent !== null) {
+    color = priceBand(deviationPercent);
+    const notes = [deviationReason(deviationPercent)];
+    if (!comparisonIncludesShipping) {
+      notes.push("Vergleich vor offenen Versandkosten");
+    }
+    if (!offer.conditionCertain) {
+      notes.push("Modul-Richtwert konservativ angenommen");
+    }
+    reason = notes.join(" · ");
+  }
+
+  return {
+    ...offer,
+    color,
+    reason,
+    unsuitableReason,
+    comparisonCents,
+    comparisonIncludesShipping,
+    differenceCents,
+    deviationPercent,
+  };
+}
+
 export function evaluateKleinanzeigenListing(
   listing: ParserListing,
   currentGame: SearchGame,
@@ -368,49 +468,13 @@ export function evaluateKleinanzeigenListing(
     priceCents !== null && shipping.cents !== null
       ? priceCents + shipping.cents
       : null;
-  const differenceCents =
-    totalCents !== null && referenceCents !== null
-      ? referenceCents - totalCents
-      : null;
-
-  let color: OfferColor = "yellow";
-  let reason = "Preis oder Richtwert ist nicht eindeutig";
   const rejected = hardRejectReason(text);
-  if (rejected) {
-    color = "red";
-    reason = rejected;
-  } else if (shipping.status === "unknown") {
-    reason = "Versand muss in der Anzeige bestätigt werden";
-  } else if (shipping.cents === null) {
-    reason = "Versand ist möglich, aber die Gesamtkosten sind offen";
-  } else if (!matchCertain) {
-    reason = "Konvolut erkannt, Inhalt aber nicht eindeutig";
-  } else if (!bundleCertain) {
-    reason = `${matchedGames.length} Spiele erkannt, Beschreibung möglicherweise gekürzt`;
-  } else if (!condition.certain) {
-    reason = "Zustand nicht eindeutig; Modulwert wird vorsichtig angenommen";
-  } else if (priceCents !== null && priceCents <= 100) {
-    reason = "Preis von 1 € oder weniger ist wahrscheinlich ein Platzhalter";
-  } else if (totalCents !== null && referenceCents !== null) {
-    const clearlyBelow =
-      totalCents <= referenceCents - 1000 || totalCents <= referenceCents * 0.8;
-    if (clearlyBelow) {
-      color = "green";
-      reason = `Mindestens 10 € oder 20 % unter dem Richtwert`;
-    } else if (totalCents <= referenceCents + 1000) {
-      color = "yellow";
-      reason = "Bis höchstens 10 € über dem Richtwert";
-    } else {
-      color = "red";
-      reason = "Mehr als 10 € über dem Richtwert";
-    }
-  }
 
   const resolvedGameIds = matchedGames.map((game) => game.id);
   const listingId = String(listing.id || listing.url || `${currentGame.id}-${title}`);
   return {
     kind: "offer",
-    offer: {
+    offer: reclassifyEvaluatedOffer({
       id: `kleinanzeigen:${listingId}`,
       listingId,
       source: "kleinanzeigen",
@@ -422,15 +486,19 @@ export function evaluateKleinanzeigenListing(
       priceCents,
       shippingCents: shipping.cents,
       totalCents,
+      comparisonCents: null,
+      comparisonIncludesShipping: false,
       shippingStatus: shipping.status,
       shippingLabel: shipping.label,
       condition: condition.key,
       conditionLabel: condition.label,
       conditionCertain: condition.certain,
       referenceCents,
-      differenceCents,
-      color,
-      reason,
+      differenceCents: null,
+      deviationPercent: null,
+      color: "unknown",
+      reason: "Preisvergleich wird berechnet",
+      unsuitableReason: rejected,
       isBundle,
       bundleCertain,
       matchCertain,
@@ -441,7 +509,7 @@ export function evaluateKleinanzeigenListing(
       place: listing.place || listing.postal_code || null,
       postedAt: listing.posted_at || null,
       checkedAt: now.toISOString(),
-    },
+    }),
   };
 }
 

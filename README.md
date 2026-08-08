@@ -1,4 +1,4 @@
-# SNES PAL Sammlung – Version 0.3
+# SNES PAL Sammlung – Version 0.3.1
 
 Ein für iPhone und Desktop optimierter Sammlungsmanager für europäische
 Super-Nintendo-Spiele.
@@ -21,7 +21,8 @@ Super-Nintendo-Spiele.
 - sequenzieller Vollsuchlauf mit sanftem Stopp und lokal gespeichertem Fortsetzen
 - Prüfung von Titel und Beschreibungsanriss auf Repros, Defekte und Konvolute
 - Konvolut-Richtwert als Summe aller erkannten Spiele aus der Preisbibliothek
-- eigene Preisampel inklusive erkannter Versandkosten
+- vierstufige Preisampel nach prozentualer Abweichung inklusive erkannter Versandkosten
+- neutrale Kennzeichnung für nicht belastbar bewertbare Angebote
 - lokale Speicherung im Browser
 - JSON-Datensicherung mit Export und Import
 - dunkle, touchfreundliche Oberfläche
@@ -41,16 +42,25 @@ Seitenquelle und jede einzelne Trefferquelle geprüft. Eine unerwartet aktive
 Vinted-Quelle stoppt den Lauf, statt Ergebnisse zu vermischen.
 
 Die Ampel vergleicht den Gesamtpreis mit dem zum erkannten Zustand passenden
-Online-Richtwert:
+Online-Richtwert. Ist der Versandpreis offen, wird sichtbar gekennzeichnet der
+Angebotspreis vor Versand verwendet:
 
-- **Grün:** mindestens 10 Euro oder 20 Prozent günstiger
-- **Gelb:** unklar oder höchstens 10 Euro über dem Richtwert
-- **Rot:** mehr als 10 Euro teurer oder als Repro/Defekt/Gesuch unpassend
+- **Grün:** günstiger oder höchstens 10 Prozent über dem Richtwert
+- **Gelb:** 11 bis 25 Prozent über dem Richtwert
+- **Orange:** 26 bis 40 Prozent über dem Richtwert
+- **Rot:** ab gerundeten 41 Prozent über dem Richtwert oder als Repro/Defekt/Gesuch unpassend
+- **Unklar:** Preis, Titelzuordnung oder Konvolutinhalt nicht belastbar bewertbar
 
-Unklare Versandkosten, Zustände und Konvolutinhalte werden niemals grün
-gerechnet. Der Parser liefert den auf der Suchergebnisseite sichtbaren
-Beschreibungsanriss; eine möglicherweise gekürzte Konvolutbeschreibung wird
-deshalb gelb gekennzeichnet.
+Ein nicht ausdrücklich genannter Zustand wird konservativ mit dem Modulwert
+verglichen und entsprechend markiert. Der Parser liefert den auf der
+Suchergebnisseite sichtbaren Beschreibungsanriss; eine möglicherweise gekürzte
+Konvolutbeschreibung bleibt deshalb **Unklar**.
+
+Version 0.3.1 bereinigt Suchbegriffe für die Worker-Route. `Ranma 1/2` wird
+beispielsweise als `SNES Ranma 1 2` abgefragt, während die Treffer weiterhin
+gegen den unveränderten Katalogtitel geprüft werden. Dadurch lässt sich ein bei
+diesem Titel unterbrochener Lauf ohne Verlust der gespeicherten Ergebnisse
+fortsetzen.
 
 Bei der Titelzuordnung gewinnt die längste eindeutige Fundstelle. Ein Angebot
 für `Aero the Acro-Bat 2` zählt deshalb nicht zusätzlich den Richtwert von
@@ -99,13 +109,14 @@ npm run lint
 npm run build:pages
 ```
 
-`npm test` prüft unter anderem die Ampelgrenzen, Versandfilter, Repros,
+`npm test` prüft unter anderem die vier Ampelgrenzen, Versandfilter, Repros,
 Konvolutsummen, Basis-/Fortsetzungstitel und alle 530 Katalogtitel auf falsche
-Mehrfachzuordnungen. GitHub Pages führt Test und Build bei jedem Push auf
-`main` erneut aus.
+Mehrfachzuordnungen sowie routesichere Suchbegriffe. GitHub Pages führt Test
+und Build bei jedem Push auf `main` erneut aus.
 
 ## Versionen
 
+- [`docs/VERSION-0.3.1.md`](docs/VERSION-0.3.1.md) – Ranma-Fortsetzungsfix und Prozentampel
 - [`docs/VERSION-0.3.md`](docs/VERSION-0.3.md) – Kleinanzeigen-Suche und Preisampel
 - [`docs/VERSION-0.2.md`](docs/VERSION-0.2.md) – vollständiger PAL-Katalog und Onlinepreise
 - [`docs/SEARCH.md`](docs/SEARCH.md) – Suchablauf, Konvolute und Grenzen

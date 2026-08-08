@@ -3,8 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Game } from "./collection-manager";
 import {
+  buildParserQuery,
   evaluateKleinanzeigenListing,
   mergeEvaluatedOffers,
+  reclassifyEvaluatedOffer,
   type EvaluatedOffer,
   type OfferColor,
   type ParserListing,
@@ -100,6 +102,29 @@ function formatDateTime(value: string | null) {
   }).format(new Date(value));
 }
 
+function formatPercent(value: number | null) {
+  if (value === null) return "–";
+  if (value > 0) return `+${value} %`;
+  if (value < 0) return `−${Math.abs(value)} %`;
+  return "0 %";
+}
+
+function colorLabel(color: OfferColor) {
+  if (color === "green") return "Grün";
+  if (color === "yellow") return "Gelb";
+  if (color === "orange") return "Orange";
+  if (color === "red") return "Rot";
+  return "Unklar";
+}
+
+function offerColorLabel(color: OfferColor) {
+  if (color === "green") return "Gut / günstig";
+  if (color === "yellow") return "11–25 % darüber";
+  if (color === "orange") return "26–40 % darüber";
+  if (color === "red") return "Ab 41 % / unpassend";
+  return "Nicht bewertbar";
+}
+
 function statusLabel(status: RunStatus) {
   if (status === "running") return "Suche läuft";
   if (status === "stopping") return "Stoppt nach aktuellem Paket";
@@ -125,7 +150,7 @@ function cleanSession(value: unknown, validGameIds: Set<string>): SearchSession 
         (raw as EvaluatedOffer).source === "kleinanzeigen" &&
         typeof (raw as EvaluatedOffer).url === "string"
       ) {
-        results[key] = raw as EvaluatedOffer;
+        results[key] = reclassifyEvaluatedOffer(raw as EvaluatedOffer);
       }
     }
   }
@@ -306,7 +331,7 @@ export default function SearchPanel({
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), 50_000);
     const moduleValue = game.prices.module;
-    const query = `SNES ${game.title}`.slice(0, 120);
+    const query = buildParserQuery(game.title);
     try {
       const response = await fetch(`${GENERIC_PARSER_URL}/api/search`, {
         method: "POST",
@@ -365,10 +390,13 @@ export default function SearchPanel({
       }
       return payload;
     } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") {
-        throw new Error("Das aktuelle Arbeitspaket hat zu lange gedauert.");
-      }
-      throw error;
+      const message =
+        error instanceof DOMException && error.name === "AbortError"
+          ? "Das aktuelle Arbeitspaket hat zu lange gedauert."
+          : error instanceof Error
+            ? error.message
+            : "Das aktuelle Arbeitspaket konnte nicht verarbeitet werden.";
+      throw new Error(`${game.title}: ${message}`);
     } finally {
       window.clearTimeout(timeout);
     }
@@ -554,7 +582,13 @@ export default function SearchPanel({
 
   const offers = useMemo(() => {
     const normalizedQuery = resultQuery.trim().toLocaleLowerCase("de-DE");
-    const colorOrder: Record<OfferColor, number> = { green: 0, yellow: 1, red: 2 };
+    const colorOrder: Record<OfferColor, number> = {
+      green: 0,
+      yellow: 1,
+      orange: 2,
+      red: 3,
+      unknown: 4,
+    };
     return Object.values(session.results)
       .filter((offer) => trafficFilter === "all" || offer.color === trafficFilter)
       .filter((offer) => {
@@ -574,7 +608,13 @@ export default function SearchPanel({
   }, [gameById, resultQuery, session.results, trafficFilter]);
 
   const offerCounts = useMemo(() => {
-    const counts: Record<OfferColor, number> = { green: 0, yellow: 0, red: 0 };
+    const counts: Record<OfferColor, number> = {
+      green: 0,
+      yellow: 0,
+      orange: 0,
+      red: 0,
+      unknown: 0,
+    };
     for (const offer of Object.values(session.results)) counts[offer.color] += 1;
     return counts;
   }, [session.results]);
@@ -683,19 +723,27 @@ export default function SearchPanel({
         <article className="traffic-legend">
           <div>
             <span className="traffic-dot is-green" />
-            <p><strong>Grün</strong><small>mind. 10 € oder 20 % günstiger</small></p>
+            <p><strong>Grün</strong><small>günstiger oder bis 10 % über Richtwert</small></p>
           </div>
           <div>
             <span className="traffic-dot is-yellow" />
-            <p><strong>Gelb</strong><small>unklar oder bis 10 € teurer</small></p>
+            <p><strong>Gelb</strong><small>11 bis 25 % über Richtwert</small></p>
+          </div>
+          <div>
+            <span className="traffic-dot is-orange" />
+            <p><strong>Orange</strong><small>26 bis 40 % über Richtwert</small></p>
           </div>
           <div>
             <span className="traffic-dot is-red" />
-            <p><strong>Rot</strong><small>mehr als 10 € teurer oder unpassend</small></p>
+            <p><strong>Rot</strong><small>ab 41 % darüber oder unpassend</small></p>
+          </div>
+          <div>
+            <span className="traffic-dot is-unknown" />
+            <p><strong>Unklar</strong><small>Preis, Zuordnung oder Konvolut nicht bewertbar</small></p>
           </div>
           <p className="legend-note">
-            Preisvergleich inklusive erkannter Versandkosten. Unklare Zustände,
-            Versandkosten und Konvolutinhalte werden nie grün gerechnet.
+            Erkannte Versandkosten sind enthalten. Bei offenen Versandkosten wird
+            der Angebotspreis vor Versand bewertet und klar gekennzeichnet.
           </p>
         </article>
       </div>
@@ -730,7 +778,7 @@ export default function SearchPanel({
           />
         </label>
         <div className="traffic-filters" aria-label="Ampelfilter">
-          {(["all", "green", "yellow", "red"] as const).map((color) => (
+          {(["all", "green", "yellow", "orange", "red", "unknown"] as const).map((color) => (
             <button
               aria-pressed={trafficFilter === color}
               className={trafficFilter === color ? `is-active is-${color}` : `is-${color}`}
@@ -743,7 +791,7 @@ export default function SearchPanel({
             >
               {color === "all"
                 ? `Alle ${Object.keys(session.results).length}`
-                : `${color === "green" ? "Grün" : color === "yellow" ? "Gelb" : "Rot"} ${offerCounts[color]}`}
+                : `${colorLabel(color)} ${offerCounts[color]}`}
             </button>
           ))}
         </div>
@@ -773,10 +821,11 @@ export default function SearchPanel({
                       <div className="offer-badges">
                         <span className={`traffic-pill is-${offer.color}`}>
                           <span className={`traffic-dot is-${offer.color}`} />
-                          {offer.color === "green" ? "Günstig" : offer.color === "yellow" ? "Prüfen" : "Teuer / unpassend"}
+                          {offerColorLabel(offer.color)}
                         </span>
                         <span>{offer.isBundle ? "Konvolut" : "Einzelangebot"}</span>
                         <span>{offer.conditionLabel}</span>
+                        {!offer.comparisonIncludesShipping ? <span>Versand offen</span> : null}
                       </div>
                       <h4>{offer.title}</h4>
                     </div>
@@ -791,6 +840,7 @@ export default function SearchPanel({
                     <div><span>Versand</span><strong>{offer.shippingCents === null ? "offen" : formatEuro(offer.shippingCents)}</strong></div>
                     <div><span>Gesamt</span><strong>{formatEuro(offer.totalCents)}</strong></div>
                     <div><span>Richtwert</span><strong>{formatEuro(offer.referenceCents)}</strong></div>
+                    <div><span>Abweichung</span><strong>{formatPercent(offer.deviationPercent)}</strong></div>
                     <div className={offer.differenceCents !== null && offer.differenceCents > 0 ? "is-saving" : ""}>
                       <span>Differenz</span>
                       <strong>

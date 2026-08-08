@@ -11,13 +11,17 @@
    bestätigte Stand lässt sich nach Stopp, Fehler oder Browser-Neustart
    fortsetzen.
 5. Doppelte Anzeigen werden über ihre Kleinanzeigen-ID zusammengeführt.
+6. Zeichen mit Routenbedeutung werden nur für die Parserabfrage neutralisiert.
+   So wird `Ranma 1/2` als `SNES Ranma 1 2` gesucht, die Trefferzuordnung nutzt
+   aber weiterhin den vollständigen Katalogtitel.
 
 ## Versandfilter
 
-Reine Abholangebote werden entfernt. Ist Versand erkennbar, aber der Preis
-offen, oder enthält der Beschreibungsanriss gar keinen Versandhinweis, bleibt
-das Angebot zur manuellen Prüfung gelb. Ein Angebot mit offenen Gesamtkosten
-kann niemals grün werden.
+Reine Abholangebote werden entfernt. Erkannte Versandkosten werden zum Preis
+addiert. Ist Versand möglich, aber der Preis offen, oder enthält der
+Beschreibungsanriss keinen Versandhinweis, wird die Ampel auf Basis des
+Angebotspreises vor Versand berechnet. Die Karte trägt dann deutlich den
+Hinweis **Versand offen**.
 
 ## Einzelspiele und Konvolute
 
@@ -29,20 +33,23 @@ Titelvorkommen beide Spiele erkennen.
 Bei Konvoluten ist der Richtwert die Summe aller eindeutig erkannten Spiele im
 jeweils erkannten Zustand. Nennt die Anzeige mehr Spiele als erkannt wurden,
 ist der Inhalt abgeschnitten oder bleibt die Zuordnung unsicher, wird das
-Angebot gelb und nicht künstlich günstig gerechnet.
+Angebot neutral als **Unklar** markiert und nicht künstlich günstig gerechnet.
 
 ## Ampel
 
-- **Grün:** mindestens 10 Euro oder 20 Prozent unter dem Richtwert
-- **Gelb:** unklar oder bis einschließlich 10 Euro über dem Richtwert
-- **Rot:** mehr als 10 Euro über dem Richtwert oder fachlich unpassend
+- **Grün:** günstiger oder bis einschließlich 10 Prozent über dem Richtwert
+- **Gelb:** 11 bis einschließlich 25 Prozent über dem Richtwert
+- **Orange:** 26 bis einschließlich 40 Prozent über dem Richtwert
+- **Rot:** ab gerundeten 41 Prozent über dem Richtwert oder fachlich unpassend
+- **Unklar:** Preis, Titelzuordnung oder Konvolutinhalt nicht belastbar bewertbar
 
 Repros, Defekte, Gesuche und reine Verpackungs-/Anleitungsangebote sind rot.
-Erkannte Versandkosten werden zum Angebotspreis addiert.
+Ein nicht eindeutig genannter Zustand nutzt konservativ den Modul-Richtwert;
+die Annahme wird in der Trefferkarte angezeigt.
 
 ## Technische Grenze
 
 Der GenericParser liefert den Beschreibungsanriss der Kleinanzeigen-
 Ergebnisseite. Die SNES-Anwendung greift nicht direkt auf Detailseiten zu.
-Deshalb bleibt jede möglicherweise unvollständige Konvolutbewertung gelb und
+Deshalb bleibt jede möglicherweise unvollständige Konvolutbewertung unklar und
 muss in der verlinkten Anzeige bestätigt werden.

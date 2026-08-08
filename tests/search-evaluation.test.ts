@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
+  buildParserQuery,
   evaluateKleinanzeigenListing,
   type SearchGame,
 } from "../app/search-evaluation.ts";
@@ -51,15 +52,21 @@ test("marks a shipped offer at least ten euros below reference green", () => {
   assert.equal(result.color, "green");
 });
 
-test("uses the ten euro upper boundary for yellow and red", () => {
-  assert.equal(offer(65, "Originales Modul. Versand inklusive.").color, "yellow");
-  assert.equal(offer(75, "Originales Modul. Versand inklusive.").color, "red");
+test("uses the requested percentage boundaries for all four price colors", () => {
+  assert.equal(offer(69, "Originales Modul. Versand inklusive.").color, "green");
+  assert.equal(offer(70, "Originales Modul. Versand inklusive.").color, "yellow");
+  assert.equal(offer(79, "Originales Modul. Versand inklusive.").color, "yellow");
+  assert.equal(offer(80, "Originales Modul. Versand inklusive.").color, "orange");
+  assert.equal(offer(88, "Originales Modul. Versand inklusive.").color, "orange");
+  assert.equal(offer(89, "Originales Modul. Versand inklusive.").color, "red");
 });
 
-test("never marks unknown shipping green", () => {
+test("compares an offer before shipping when shipping costs are still open", () => {
   const result = offer(20, "Originales PAL Modul in gutem Zustand.");
   assert.equal(result.shippingStatus, "unknown");
-  assert.equal(result.color, "yellow");
+  assert.equal(result.color, "green");
+  assert.equal(result.comparisonIncludesShipping, false);
+  assert.match(result.reason, /vor offenen Versandkosten/i);
 });
 
 test("rejects reproductions regardless of price", () => {
@@ -195,7 +202,7 @@ test("keeps separate occurrences of a base game and sequel in a real bundle", ()
   assert.equal(result.offer.color, "green");
 });
 
-test("keeps a bundle yellow when fewer games are recognized than advertised", () => {
+test("keeps a bundle unclassified when fewer games are recognized than advertised", () => {
   const result = evaluateKleinanzeigenListing(
     {
       id: "incomplete-bundle",
@@ -211,7 +218,18 @@ test("keeps a bundle yellow when fewer games are recognized than advertised", ()
   );
   assert.equal(result.kind, "offer");
   assert.equal(result.offer.bundleCertain, false);
-  assert.equal(result.offer.color, "yellow");
+  assert.equal(result.offer.color, "unknown");
+});
+
+test("removes slash characters from parser queries without changing title matching", () => {
+  assert.equal(buildParserQuery("Ranma 1/2"), "SNES Ranma 1 2");
+});
+
+test("all 530 catalog queries are safe for the parser search route", () => {
+  const unsafe = catalog.games
+    .map((game) => ({ title: game.title, query: buildParserQuery(game.title) }))
+    .filter(({ query }) => /[\\/]/.test(query));
+  assert.deepEqual(unsafe, []);
 });
 
 test("every exact catalog title remains a single-game offer", () => {

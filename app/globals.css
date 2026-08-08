@@ -15,7 +15,9 @@
   --accent-deep: #6651e8;
   --green: #49d5a7;
   --yellow: #f1c75b;
+  --orange: #f49b52;
   --red: #ff6b7d;
+  --unknown: #8991a3;
   --shadow: 0 22px 60px rgba(0, 0, 0, 0.36);
 }
 
@@ -1184,9 +1186,19 @@ button:disabled {
   box-shadow: 0 0 12px rgba(241, 199, 91, 0.35);
 }
 
+.traffic-dot.is-orange {
+  background: var(--orange);
+  box-shadow: 0 0 12px rgba(244, 155, 82, 0.35);
+}
+
 .traffic-dot.is-red {
   background: var(--red);
   box-shadow: 0 0 12px rgba(255, 107, 125, 0.35);
+}
+
+.traffic-dot.is-unknown {
+  background: var(--unknown);
+  box-shadow: 0 0 12px rgba(137, 145, 163, 0.28);
 }
 
 .legend-note {
@@ -1287,8 +1299,16 @@ button:disabled {
   border-color: rgba(241, 199, 91, 0.48);
 }
 
+.traffic-filters button.is-active.is-orange {
+  border-color: rgba(244, 155, 82, 0.5);
+}
+
 .traffic-filters button.is-active.is-red {
   border-color: rgba(255, 107, 125, 0.48);
+}
+
+.traffic-filters button.is-active.is-unknown {
+  border-color: rgba(137, 145, 163, 0.5);
 }
 
 .search-results-list {
@@ -1320,8 +1340,16 @@ button:disabled {
   border-left-color: var(--yellow);
 }
 
+.search-result.is-orange {
+  border-left-color: var(--orange);
+}
+
 .search-result.is-red {
   border-left-color: var(--red);
+}
+
+.search-result.is-unknown {
+  border-left-color: var(--unknown);
 }
 
 .offer-image {
@@ -1403,7 +1431,7 @@ button:disabled {
 .offer-comparison {
   margin-top: 12px;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 6px;
 }
 
