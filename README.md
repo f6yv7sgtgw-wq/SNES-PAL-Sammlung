@@ -1,7 +1,10 @@
-# SNES PAL Sammlung – Version 0.2
+# SNES PAL Sammlung – Version 0.3
 
 Ein für iPhone und Desktop optimierter Sammlungsmanager für europäische
 Super-Nintendo-Spiele.
+
+- [Projektseite](https://snes-pal-sammlung.jnldc.chatgpt.site)
+- [GitHub Pages](https://f6yv7sgtgw-wq.github.io/SNES-PAL-Sammlung/)
 
 ## Funktionen
 
@@ -12,12 +15,48 @@ Super-Nintendo-Spiele.
 - Zustand, Kaufpreis, Kaufdatum und persönliche Notizen erfassen
 - Sammlungsfortschritt, Richtwert und erfasste Ausgaben im Überblick
 - Suche, Status- und Seltenheitsfilter sowie mehrere Sortierungen
+- dritter Hauptbereich **Suche** für alle noch fehlenden Spiele
+- ausschließliche Anbindung des GenericParser an Kleinanzeigen
+- deutschlandweite Suche mit Versand; reine Abholangebote werden entfernt
+- sequenzieller Vollsuchlauf mit sanftem Stopp und lokal gespeichertem Fortsetzen
+- Prüfung von Titel und Beschreibungsanriss auf Repros, Defekte und Konvolute
+- Konvolut-Richtwert als Summe aller erkannten Spiele aus der Preisbibliothek
+- eigene Preisampel inklusive erkannter Versandkosten
 - lokale Speicherung im Browser
 - JSON-Datensicherung mit Export und Import
 - dunkle, touchfreundliche Oberfläche
 
-Nicht enthalten sind Wunschlisten, Deals, Preisalarme oder automatische
-Marktsuchen.
+Nicht enthalten sind Wunschlisten, Preisalarme, Benachrichtigungen, Vinted,
+eBay oder Händlerquellen. Die Kleinanzeigen-Suche wird bewusst vom Nutzer
+gestartet und läuft nur, solange die Seite geöffnet ist.
+
+## Kleinanzeigen-Suche
+
+Die Anwendung verwendet ausschließlich den öffentlichen Worker des
+[`GenericParser`](https://github.com/f6yv7sgtgw-wq/GenericParser) mit dem
+Vertrag `generic-parser-module-v1`. Für den Beschreibungsanriss nutzt die App
+die kompatible Route `/api/search`; jeder Request setzt trotzdem den
+Vertragsheader und fest `source: "kleinanzeigen"`. Antworten werden auf Vertrag,
+Seitenquelle und jede einzelne Trefferquelle geprüft. Eine unerwartet aktive
+Vinted-Quelle stoppt den Lauf, statt Ergebnisse zu vermischen.
+
+Die Ampel vergleicht den Gesamtpreis mit dem zum erkannten Zustand passenden
+Online-Richtwert:
+
+- **Grün:** mindestens 10 Euro oder 20 Prozent günstiger
+- **Gelb:** unklar oder höchstens 10 Euro über dem Richtwert
+- **Rot:** mehr als 10 Euro teurer oder als Repro/Defekt/Gesuch unpassend
+
+Unklare Versandkosten, Zustände und Konvolutinhalte werden niemals grün
+gerechnet. Der Parser liefert den auf der Suchergebnisseite sichtbaren
+Beschreibungsanriss; eine möglicherweise gekürzte Konvolutbeschreibung wird
+deshalb gelb gekennzeichnet.
+
+Bei der Titelzuordnung gewinnt die längste eindeutige Fundstelle. Ein Angebot
+für `Aero the Acro-Bat 2` zählt deshalb nicht zusätzlich den Richtwert von
+`Aero the Acro-Bat`. Getrennte Titelvorkommen in einem echten Konvolut werden
+dagegen einzeln summiert. Weitere Details stehen in
+[`docs/SEARCH.md`](docs/SEARCH.md).
 
 ## Preisquelle
 
@@ -36,8 +75,9 @@ für diesen Titel deshalb bewusst einen Platzhalter.
 
 ## Daten
 
-Die persönliche Sammlung wird ausschließlich im lokalen Speicher des Browsers
-abgelegt. Der Katalog ist in `app/snes-games.json` enthalten. Mit
+Die persönliche Sammlung sowie Suchfortschritt und gefundene Angebote werden
+ausschließlich im lokalen Speicher des Browsers abgelegt. Der Katalog ist in
+`app/snes-games.json` enthalten. Mit
 `scripts/extract_snes_guide.py` lässt er sich aus dem ursprünglichen PDF
 reproduzierbar neu erzeugen. `scripts/update-online-prices.mjs` prüft die
 Titelzuordnung und kann einen neuen Online-Preissnapshot übernehmen.
@@ -45,18 +85,28 @@ Titelzuordnung und kann einen neuen Online-Preissnapshot übernehmen.
 ## Entwicklung
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
 Die Anwendung basiert auf React, TypeScript und Vinext.
 
-## Veröffentlichungen
+## Qualitätsprüfung
 
-- Projektseite: https://snes-pal-sammlung.jnldc.chatgpt.site/
-- GitHub Pages: https://f6yv7sgtgw-wq.github.io/SNES-PAL-Sammlung/
+```bash
+npm test
+npm run lint
+npm run build:pages
+```
 
-Der GitHub-Pages-Build verwendet dieselbe React-Oberfläche, denselben
-530-Spiele-Katalog und dieselben Cover wie die Projektseite. Die persönliche
-Sammlung bleibt auf beiden Seiten ausschließlich im jeweiligen Browser
-gespeichert.
+`npm test` prüft unter anderem die Ampelgrenzen, Versandfilter, Repros,
+Konvolutsummen, Basis-/Fortsetzungstitel und alle 530 Katalogtitel auf falsche
+Mehrfachzuordnungen. GitHub Pages führt Test und Build bei jedem Push auf
+`main` erneut aus.
+
+## Versionen
+
+- [`docs/VERSION-0.3.md`](docs/VERSION-0.3.md) – Kleinanzeigen-Suche und Preisampel
+- [`docs/VERSION-0.2.md`](docs/VERSION-0.2.md) – vollständiger PAL-Katalog und Onlinepreise
+- [`docs/SEARCH.md`](docs/SEARCH.md) – Suchablauf, Konvolute und Grenzen
+- [`docs/DATA-SOURCES.md`](docs/DATA-SOURCES.md) – Katalog-, Preis- und Angebotsquellen

@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "SNES PAL Sammlung",
     short_name: "SNES Sammlung",
     description:
-      "Sammlungsmanager für 530 europäische SNES-PAL-Spiele mit festen Richtwerten.",
+      "Sammlungsmanager für 530 europäische SNES-PAL-Spiele mit Richtwerten und Kleinanzeigen-Suche.",
     start_url: "/",
     display: "standalone",
     background_color: "#090a0f",

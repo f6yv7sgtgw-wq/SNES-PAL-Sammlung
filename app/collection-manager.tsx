@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
+import SearchPanel from "./search-panel";
 
 export type PriceKey = "module" | "cib" | "new" | "box" | "manual";
 
@@ -47,7 +48,7 @@ type CollectionState = {
   owned: Record<string, OwnedEntry>;
 };
 
-type View = "collection" | "catalog";
+type View = "collection" | "catalog" | "search";
 
 const STORAGE_KEY = "snes-pal-sammlung-v1";
 const CONDITION_LABELS: Record<PriceKey, string> = {
@@ -804,7 +805,7 @@ export default function CollectionManager({
               <div>
                 <div className="title-row">
                   <h1>SNES PAL Sammlung</h1>
-                  <span className="version-badge">Version 0.2</span>
+                  <span className="version-badge">Version 0.3</span>
                 </div>
                 <p>Sammlungsmanager mit 530 PAL-Spielen</p>
               </div>
@@ -845,11 +846,20 @@ export default function CollectionManager({
           >
             Katalog
           </button>
+          <button
+            className={activeView === "search" ? "tab is-active" : "tab"}
+            onClick={() => showView("search")}
+            type="button"
+          >
+            Suche
+          </button>
         </nav>
       </div>
 
       <div className="page-shell">
-        <section aria-label="Sammlungsübersicht" className="stats-grid">
+        {activeView === "collection" ? (
+          <>
+            <section aria-label="Sammlungsübersicht" className="stats-grid">
           <article className="stat-card">
             <span>Sammlung</span>
             <strong>{hydrated ? ownedCount : "–"}</strong>
@@ -870,9 +880,9 @@ export default function CollectionManager({
             <strong>{hydrated ? formatEuro(referenceValue) : "–"}</strong>
             <small>nach erfasstem Zustand</small>
           </article>
-        </section>
+            </section>
 
-        <section className="dashboard-grid">
+            <section className="dashboard-grid">
           <article className="panel progress-panel">
             <div className="section-heading">
               <div>
@@ -939,7 +949,9 @@ export default function CollectionManager({
               steht „–“.
             </p>
           </article>
-        </section>
+            </section>
+          </>
+        ) : null}
 
         {activeView === "collection" ? (
           <section className="panel main-panel">
@@ -1079,7 +1091,7 @@ export default function CollectionManager({
               </div>
             )}
           </section>
-        ) : (
+        ) : activeView === "catalog" ? (
           <section className="panel main-panel">
             <div className="section-heading">
               <div>
@@ -1231,12 +1243,19 @@ export default function CollectionManager({
               </div>
             ) : null}
           </section>
-        )}
+        ) : null}
+
+        <SearchPanel
+          active={activeView === "search"}
+          games={games}
+          onAddGame={(gameId) => setEditingGameId(gameId)}
+          ownedIds={ownedIds}
+        />
       </div>
 
       <footer>
-        <p>SNES PAL Sammlung · Version 0.2</p>
-        <p>Alle Daten bleiben lokal in diesem Browser.</p>
+        <p>SNES PAL Sammlung · Version 0.3</p>
+        <p>Sammlung, Suchfortschritt und Treffer bleiben lokal in diesem Browser.</p>
       </footer>
 
       {pickerOpen ? (

@@ -1,27 +1,27 @@
-# Übernahme der Projektseite nach GitHub
+# Veröffentlichung und Projektstand
 
-## Status
+## Gemeinsamer Quellstand
 
-Die vollständige Version 0.2 wurde aus dem ursprünglichen Projektstand
-übernommen. Das Repository enthält jetzt:
+Version 0.3 verwendet für die Projektseite und GitHub Pages dieselben React-
+Komponenten, Katalogdaten, Cover und Suchregeln. Die GitHub-Pages-Ausgabe wird
+bei jeder Änderung auf `main` automatisch getestet, gebaut und veröffentlicht.
+
+Das Repository enthält:
 
 - die vollständige React-/Vinext-Anwendung
-- den Katalog mit 530 PAL-Spielen
-- 529 Coverbilder und einen dokumentierten Platzhalter
+- den Katalog mit 530 PAL-Spielen und 529 Coverbildern
 - alle fünf Richtwerte je Spiel, soweit online verfügbar
-- lokale Sammlungsverwaltung sowie JSON-Import und -Export
-- eine eigene GitHub-Pages-Ausgabe derselben React-Oberfläche
+- lokale Sammlungsverwaltung mit JSON-Import und -Export
+- die Kleinanzeigen-Suche für alle fehlenden Spiele
+- eine eigene GitHub-Pages-Ausgabe derselben Oberfläche
 
-Die frühere vereinfachte Einzeldatei-Version ist nicht mehr der maßgebliche
-Quellstand.
+## Abnahmekriterien für 0.3
 
-## Abnahmekriterien
-
-- Navigation ausschließlich mit **Sammlung** und **Katalog**
-- keine Wünsche, Deals oder Preisalarme
-- 530 Spiele und 2.647 verfügbare Zustandswerte
-- lokale Speicherung im Browser
-- Import und Export der Sammlung
+- Navigation mit **Sammlung**, **Katalog** und **Suche**
+- Suche ausschließlich über Kleinanzeigen
+- deutschlandweit, reine Abholangebote werden entfernt
+- konservative Ampel inklusive erkannter Versandkosten
+- Konvolutwerte nur aus eindeutig erkannten Katalogtiteln
+- keine Wünsche, Preisalarme oder zusätzlichen Marktplätze
 - mobile Darstellung ohne horizontales Scrollen
-
-Der ursprüngliche Sites-Commit `44a82f5` bleibt in der Git-Historie erhalten.
+- lokale Speicherung von Sammlung, Suchstand und Treffern

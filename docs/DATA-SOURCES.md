@@ -18,3 +18,15 @@ Europäischen Zentralbank vom 28. Juli 2026 in Euro umgerechnet.
 Die ursprünglichen Guide-Werte bleiben im Datensatz unter `guidePrices`
 erhalten. Marktpreise sind Richtwerte; Zustand, Vollständigkeit, Sprachfassung
 und regionale Verpackung können den tatsächlichen Verkaufspreis beeinflussen.
+
+## Kleinanzeigen
+
+Version 0.3 bezieht Live-Angebote ausschließlich über den öffentlichen
+GenericParser-Worker. Jeder Suchrequest setzt `source: "kleinanzeigen"` und den
+Vertrag `generic-parser-module-v1`. Vinted, eBay und Händlerquellen werden nicht
+angefragt und fremde Quellenantworten führen zum Abbruch des Suchpakets.
+
+Ausgewertet werden Titel, Preis, Versandhinweise und der vom Parser gelieferte
+Beschreibungsanriss. Die Anwendung ruft keine Kleinanzeigen-Detailseiten selbst
+ab. Unvollständige Konvoluttexte, offene Versandkosten und unklare Zustände
+bleiben deshalb gelb.

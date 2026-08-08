@@ -1,0 +1,21 @@
+{
+  "product": "SNES PAL Sammlung",
+  "version": "0.3.0",
+  "release_date": "2026-08-08",
+  "catalog_games": 530,
+  "cover_images": 529,
+  "available_price_values": 2647,
+  "price_values_total": 2650,
+  "price_checked": "2026-07-28",
+  "parser_contract": "generic-parser-module-v1",
+  "parser_endpoint": "/api/search",
+  "marketplace_sources": ["kleinanzeigen"],
+  "search_scope": "Germany-wide shipping",
+  "traffic_light": {
+    "green": "at least EUR 10 or 20 percent below reference",
+    "yellow": "uncertain or up to EUR 10 above reference",
+    "red": "more than EUR 10 above reference or unsuitable"
+  },
+  "storage": "browser-local",
+  "repository": "f6yv7sgtgw-wq/SNES-PAL-Sammlung"
+}
