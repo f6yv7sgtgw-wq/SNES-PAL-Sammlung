@@ -50,3 +50,13 @@ npm run dev
 ```
 
 Die Anwendung basiert auf React, TypeScript und Vinext.
+
+## Veröffentlichungen
+
+- Projektseite: https://snes-pal-sammlung.jnldc.chatgpt.site/
+- GitHub Pages: https://f6yv7sgtgw-wq.github.io/SNES-PAL-Sammlung/
+
+Der GitHub-Pages-Build verwendet dieselbe React-Oberfläche, denselben
+530-Spiele-Katalog und dieselben Cover wie die Projektseite. Die persönliche
+Sammlung bleibt auf beiden Seiten ausschließlich im jeweiligen Browser
+gespeichert.

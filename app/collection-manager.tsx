@@ -1235,7 +1235,7 @@ export default function CollectionManager({
       </div>
 
       <footer>
-        <p>SNES PAL Sammlung · Version 0.1</p>
+        <p>SNES PAL Sammlung · Version 0.2</p>
         <p>Alle Daten bleiben lokal in diesem Browser.</p>
       </footer>
 
