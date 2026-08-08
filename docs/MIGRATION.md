@@ -15,7 +15,7 @@ Das Repository enthält:
 - die Kleinanzeigen-Suche für alle fehlenden Spiele
 - eine eigene GitHub-Pages-Ausgabe derselben Oberfläche
 
-## Abnahmekriterien für 0.3
+## Abnahmekriterien für 0.3.x
 
 - Navigation mit **Sammlung**, **Katalog** und **Suche**
 - Suche ausschließlich über Kleinanzeigen
@@ -25,3 +25,5 @@ Das Repository enthält:
 - keine Wünsche, Preisalarme oder zusätzlichen Marktplätze
 - mobile Darstellung ohne horizontales Scrollen
 - lokale Speicherung von Sammlung, Suchstand und Treffern
+- Suchtreffer in IndexedDB mit automatischer Migration aus Version 0.3.1
+- automatische Wiederholung vorübergehender Arbeitspaketfehler

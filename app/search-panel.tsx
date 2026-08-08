@@ -11,15 +11,29 @@ import {
   type OfferColor,
   type ParserListing,
 } from "./search-evaluation";
+import {
+  isRetryableHttpStatus,
+  isTransientParserFailure,
+  ParserRequestError,
+  withTransientParserRetries,
+} from "./search-recovery";
+import {
+  estimateBrowserStorage,
+  formatStorageBytes,
+  LEGACY_SEARCH_STORAGE_KEY,
+  loadStoredSearch,
+  replaceStoredSearch,
+  saveStoredSearch,
+  type BrowserStorageEstimate,
+} from "./search-storage";
 
 const GENERIC_PARSER_URL = "https://genericparser.f6yv7sgtgw.workers.dev";
-const SEARCH_STORAGE_KEY = "snes-pal-kleinanzeigen-search-v03-2";
 const SEARCH_CONTRACT = "generic-parser-module-v1";
 
 type RunStatus = "idle" | "running" | "stopping" | "paused" | "complete" | "error";
 
 type SearchSession = {
-  version: 2;
+  version: 3;
   status: RunStatus;
   queue: string[];
   gameIndex: number;
@@ -68,7 +82,7 @@ type ParserResponse = {
 };
 
 const EMPTY_SESSION: SearchSession = {
-  version: 2,
+  version: 3,
   status: "idle",
   queue: [],
   gameIndex: 0,
@@ -136,8 +150,10 @@ function statusLabel(status: RunStatus) {
 
 function cleanSession(value: unknown, validGameIds: Set<string>): SearchSession {
   if (!value || typeof value !== "object") return EMPTY_SESSION;
-  const candidate = value as Partial<SearchSession>;
-  if (candidate.version !== 2) return EMPTY_SESSION;
+  const candidate = value as Partial<Omit<SearchSession, "version">> & {
+    version?: number;
+  };
+  if (candidate.version !== 2 && candidate.version !== 3) return EMPTY_SESSION;
   const queue = Array.isArray(candidate.queue)
     ? candidate.queue.filter((id): id is string => typeof id === "string" && validGameIds.has(id))
     : [];
@@ -164,7 +180,7 @@ function cleanSession(value: unknown, validGameIds: Set<string>): SearchSession 
   return {
     ...EMPTY_SESSION,
     ...candidate,
-    version: 2,
+    version: 3,
     status,
     queue,
     results,
@@ -187,6 +203,18 @@ function cleanSession(value: unknown, validGameIds: Set<string>): SearchSession 
   };
 }
 
+function storedState(session: SearchSession) {
+  const state: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(session)) {
+    if (key !== "results") state[key] = value;
+  }
+  return state;
+}
+
+function storedOffers(results: Record<string, EvaluatedOffer>) {
+  return Object.values(results) as Array<Record<string, unknown>>;
+}
+
 async function waitForUi() {
   await new Promise((resolve) => window.setTimeout(resolve, 50));
 }
@@ -203,7 +231,6 @@ export default function SearchPanel({
   onAddGame: (gameId: string) => void;
 }) {
   const [session, setSession] = useState<SearchSession>(EMPTY_SESSION);
-  const [hydrated, setHydrated] = useState(false);
   const [worker, setWorker] = useState<WorkerState>({
     status: "idle",
     version: null,
@@ -214,11 +241,22 @@ export default function SearchPanel({
   const [resultQuery, setResultQuery] = useState("");
   const [visibleCount, setVisibleCount] = useState(40);
   const [storageWarning, setStorageWarning] = useState("");
+  const [storageNotice, setStorageNotice] = useState("");
+  const [storageEstimate, setStorageEstimate] = useState<BrowserStorageEstimate>({
+    usage: null,
+    quota: null,
+  });
+  const [storageMode, setStorageMode] = useState<"loading" | "indexeddb" | "memory">(
+    "loading",
+  );
+  const [retryNotice, setRetryNotice] = useState("");
   const sessionRef = useRef(session);
   const ownedIdsRef = useRef(ownedIds);
   const stopRequested = useRef(false);
   const running = useRef(false);
   const mounted = useRef(true);
+  const hydratedRef = useRef(false);
+  const persistenceChain = useRef<Promise<void>>(Promise.resolve());
 
   const gameById = useMemo(
     () => new Map(games.map((game) => [game.id, game])),
@@ -232,45 +270,113 @@ export default function SearchPanel({
 
   useEffect(() => {
     mounted.current = true;
+    let cancelled = false;
     const timer = window.setTimeout(() => {
-      try {
-        const stored = window.localStorage.getItem(SEARCH_STORAGE_KEY);
-        if (stored) {
-          const restored = cleanSession(JSON.parse(stored), validGameIds);
-          sessionRef.current = restored;
-          setSession(restored);
+      void (async () => {
+        let restored = EMPTY_SESSION;
+        let indexedDbReady = false;
+        let migrationMessage = "";
+
+        try {
+          const stored = await loadStoredSearch();
+          indexedDbReady = true;
+          if (stored) {
+            restored = cleanSession(
+              { ...stored.state, results: stored.offers },
+              validGameIds,
+            );
+          } else {
+            const legacy = window.localStorage.getItem(LEGACY_SEARCH_STORAGE_KEY);
+            if (legacy) {
+              restored = cleanSession(JSON.parse(legacy), validGameIds);
+              await replaceStoredSearch(storedState(restored), storedOffers(restored.results));
+              window.localStorage.removeItem(LEGACY_SEARCH_STORAGE_KEY);
+              migrationMessage = `${Object.keys(restored.results).length.toLocaleString("de-DE")} vorhandene Angebote wurden in den erweiterten Suchspeicher übernommen.`;
+            }
+          }
+        } catch (error) {
+          try {
+            const legacy = window.localStorage.getItem(LEGACY_SEARCH_STORAGE_KEY);
+            if (legacy) restored = cleanSession(JSON.parse(legacy), validGameIds);
+          } catch {
+            restored = EMPTY_SESSION;
+          }
+          if (!cancelled) {
+            setStorageWarning(
+              "Der erweiterte Suchspeicher ist momentan nicht verfügbar. Die Suche läuft weiter, kann den aktuellen Stand aber möglicherweise nicht dauerhaft sichern.",
+            );
+          }
+          console.warn("Search storage initialization failed", error);
         }
-      } catch {
-        // A broken search cache must never block the collection manager.
-      } finally {
-        setHydrated(true);
-      }
+
+        if (cancelled) return;
+        sessionRef.current = restored;
+        setSession(restored);
+        setStorageMode(indexedDbReady ? "indexeddb" : "memory");
+        setStorageNotice(migrationMessage);
+        hydratedRef.current = true;
+        try {
+          setStorageEstimate(await estimateBrowserStorage());
+        } catch {
+          // The quota indicator is optional; search persistence remains available.
+        }
+      })();
     }, 0);
     return () => {
+      cancelled = true;
       window.clearTimeout(timer);
       mounted.current = false;
+      hydratedRef.current = false;
       stopRequested.current = true;
     };
   }, [validGameIds]);
 
-  useEffect(() => {
-    if (!hydrated) return;
-    try {
-      window.localStorage.setItem(SEARCH_STORAGE_KEY, JSON.stringify(session));
-    } catch {
-      window.setTimeout(
-        () =>
+  function queuePersistence(
+    next: SearchSession,
+    changedOffers: EvaluatedOffer[] = [],
+    replace = false,
+  ) {
+    if (!hydratedRef.current) return Promise.resolve();
+    const state = storedState(next);
+    const offers = replace
+      ? storedOffers(next.results)
+      : (changedOffers as Array<Record<string, unknown>>);
+    persistenceChain.current = persistenceChain.current
+      .then(async () => {
+        if (replace) await replaceStoredSearch(state, offers);
+        else await saveStoredSearch(state, offers);
+        if (!mounted.current) return;
+        setStorageMode("indexeddb");
+        setStorageWarning("");
+        if (
+          replace ||
+          next.status === "complete" ||
+          next.status === "error" ||
+          next.requestCount % 25 === 0
+        ) {
+          setStorageEstimate(await estimateBrowserStorage());
+        }
+      })
+      .catch((error) => {
+        if (mounted.current) {
+          setStorageMode("memory");
           setStorageWarning(
-            "Suchergebnisse konnten wegen des lokalen Speicherlimits nicht vollständig gesichert werden.",
-          ),
-        0,
-      );
-    }
-  }, [hydrated, session]);
+            "Der Suchlauf läuft weiter, aber der aktuelle Stand konnte nicht dauerhaft gespeichert werden.",
+          );
+        }
+        console.warn("Search persistence failed", error);
+      });
+    return persistenceChain.current;
+  }
 
-  function commit(next: SearchSession) {
+  function commit(
+    next: SearchSession,
+    changedOffers: EvaluatedOffer[] = [],
+    replace = false,
+  ) {
     sessionRef.current = next;
     if (mounted.current) setSession(next);
+    return queuePersistence(next, changedOffers, replace);
   }
 
   async function checkWorker() {
@@ -327,12 +433,15 @@ export default function SearchPanel({
     return () => window.clearTimeout(timer);
   }, [active, worker.status]);
 
-  async function fetchPacket(game: Game, page: number) {
+  async function fetchPacketAttempt(game: Game, page: number) {
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), 50_000);
     const moduleValue = game.prices.module;
     const query = buildParserQuery(game.title);
     try {
+      if (stopRequested.current) {
+        throw new ParserRequestError("Stopp angefordert", { retryable: false });
+      }
       const response = await fetch(`${GENERIC_PARSER_URL}/api/search`, {
         method: "POST",
         cache: "no-store",
@@ -354,12 +463,34 @@ export default function SearchPanel({
         }),
         signal: controller.signal,
       });
-      const payload = (await response.json()) as ParserResponse & {
+      const rawPayload = await response.text();
+      let payload: ParserResponse & {
         detail?: string;
         error?: string;
-      };
+      } = {};
+      if (rawPayload) {
+        try {
+          payload = JSON.parse(rawPayload) as typeof payload;
+        } catch {
+          throw new ParserRequestError(
+            response.ok
+              ? "Parser lieferte keine auswertbare Antwort."
+              : `Parserfehler HTTP ${response.status}`,
+            {
+              retryable: response.ok || isRetryableHttpStatus(response.status),
+              status: response.status,
+            },
+          );
+        }
+      }
       if (!response.ok) {
-        throw new Error(payload.detail || payload.error || `Parserfehler HTTP ${response.status}`);
+        throw new ParserRequestError(
+          payload.detail || payload.error || `Parserfehler HTTP ${response.status}`,
+          {
+            retryable: isRetryableHttpStatus(response.status),
+            status: response.status,
+          },
+        );
       }
       const responseContract = response.headers.get("X-GenericParser-Contract");
       const declaredContracts = [responseContract, payload.contract].filter(
@@ -369,36 +500,80 @@ export default function SearchPanel({
         !declaredContracts.length ||
         declaredContracts.some((contract) => contract !== SEARCH_CONTRACT)
       ) {
-        throw new Error("Quellenprüfung fehlgeschlagen: Parservertrag stimmt nicht überein.");
+        throw new ParserRequestError(
+          "Quellenprüfung fehlgeschlagen: Parservertrag stimmt nicht überein.",
+          { retryable: false },
+        );
       }
       const vintedEnabled =
         payload.summary?.sources?.vinted?.enabled === true ||
         payload.source_status?.vinted?.enabled === true;
       if (vintedEnabled) {
-        throw new Error("Quellenprüfung fehlgeschlagen: Vinted war unerwartet aktiv.");
+        throw new ParserRequestError(
+          "Quellenprüfung fehlgeschlagen: Vinted war unerwartet aktiv.",
+          { retryable: false },
+        );
       }
       const responseSource = String(payload.pagination?.source || "").toLocaleLowerCase("de-DE");
       if (!responseSource.includes("kleinanzeigen")) {
-        throw new Error("Quellenprüfung fehlgeschlagen: Antwort stammt nicht nur von Kleinanzeigen.");
+        throw new ParserRequestError(
+          "Quellenprüfung fehlgeschlagen: Antwort stammt nicht nur von Kleinanzeigen.",
+          { retryable: false },
+        );
       }
       const foreignListing = (payload.listings || []).find((listing) => {
         const source = String(listing.source || listing.source_label || "").toLocaleLowerCase("de-DE");
         return !source.includes("kleinanzeigen");
       });
       if (foreignListing) {
-        throw new Error("Quellenprüfung fehlgeschlagen: Fremdquelle im Arbeitspaket.");
+        throw new ParserRequestError(
+          "Quellenprüfung fehlgeschlagen: Fremdquelle im Arbeitspaket.",
+          { retryable: false },
+        );
       }
       return payload;
     } catch (error) {
+      if (error instanceof ParserRequestError) throw error;
+      if (error instanceof DOMException && error.name === "AbortError") {
+        throw new ParserRequestError("Das aktuelle Arbeitspaket hat zu lange gedauert.", {
+          retryable: true,
+        });
+      }
       const message =
-        error instanceof DOMException && error.name === "AbortError"
-          ? "Das aktuelle Arbeitspaket hat zu lange gedauert."
-          : error instanceof Error
-            ? error.message
-            : "Das aktuelle Arbeitspaket konnte nicht verarbeitet werden.";
-      throw new Error(`${game.title}: ${message}`);
+        error instanceof Error
+          ? error.message
+          : "Das aktuelle Arbeitspaket konnte nicht verarbeitet werden.";
+      throw new ParserRequestError(message, {
+        retryable: isTransientParserFailure(error),
+      });
     } finally {
       window.clearTimeout(timeout);
+    }
+  }
+
+  async function fetchPacket(game: Game, page: number) {
+    setRetryNotice("");
+    try {
+      return await withTransientParserRetries(() => fetchPacketAttempt(game, page), {
+        onRetry: (retryNumber, totalAttempts) => {
+          if (mounted.current) {
+            setRetryNotice(
+              `${game.title}: Verbindung unterbrochen – automatischer Versuch ${retryNumber + 1} von ${totalAttempts}.`,
+            );
+          }
+        },
+      });
+    } catch (error) {
+      const rawMessage =
+        error instanceof Error
+          ? error.message
+          : "Das aktuelle Arbeitspaket konnte nicht verarbeitet werden.";
+      const message = isTransientParserFailure(error)
+        ? `Verbindung zum Parser nach drei Versuchen abgebrochen (${rawMessage}). Der Fortsetzungspunkt bleibt gespeichert.`
+        : rawMessage;
+      throw new Error(`${game.title}: ${message}`);
+    } finally {
+      if (mounted.current) setRetryNotice("");
     }
   }
 
@@ -412,7 +587,7 @@ export default function SearchPanel({
       lastError: null,
       updatedAt: new Date().toISOString(),
     };
-    commit(current);
+    await commit(current);
 
     try {
       for (let index = current.gameIndex; index < current.queue.length; index += 1) {
@@ -427,7 +602,7 @@ export default function SearchPanel({
             completedGameIds: Array.from(new Set([...current.completedGameIds, gameId])),
             updatedAt: new Date().toISOString(),
           };
-          commit(current);
+          await commit(current);
           continue;
         }
 
@@ -443,7 +618,7 @@ export default function SearchPanel({
               currentGameId: game.id,
               updatedAt: new Date().toISOString(),
             };
-            commit(current);
+            await commit(current);
             return;
           }
           if (seenPages.has(page)) throw new Error("Der Parser hat dieselbe Ergebnisseite wiederholt.");
@@ -461,6 +636,7 @@ export default function SearchPanel({
           const packet = await fetchPacket(game, page);
           const listings = Array.isArray(packet.listings) ? packet.listings : [];
           const results = { ...current.results };
+          const changedOffers: EvaluatedOffer[] = [];
           const ignored = { ...current.ignored };
           for (const listing of listings) {
             const evaluated = evaluateKleinanzeigenListing(
@@ -475,10 +651,12 @@ export default function SearchPanel({
               else ignored.irrelevant += 1;
               continue;
             }
-            results[evaluated.offer.id] = mergeEvaluatedOffers(
+            const merged = mergeEvaluatedOffers(
               results[evaluated.offer.id],
               evaluated.offer,
             );
+            results[evaluated.offer.id] = merged;
+            changedOffers.push(merged);
           }
 
           const rawNext = packet.pagination?.next_page;
@@ -495,7 +673,7 @@ export default function SearchPanel({
             page: nextPage ?? 0,
             updatedAt: new Date().toISOString(),
           };
-          commit(current);
+          await commit(current, changedOffers);
           if (nextPage === null || packet.pagination?.complete === true) break;
           page = nextPage;
         }
@@ -508,7 +686,7 @@ export default function SearchPanel({
           completedGameIds: Array.from(new Set([...current.completedGameIds, game.id])),
           updatedAt: new Date().toISOString(),
         };
-        commit(current);
+        await commit(current);
         await waitForUi();
       }
 
@@ -521,7 +699,7 @@ export default function SearchPanel({
         completedAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      commit(current);
+      await commit(current);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Die Suche wurde unerwartet unterbrochen.";
       current = {
@@ -530,14 +708,14 @@ export default function SearchPanel({
         lastError: message,
         updatedAt: new Date().toISOString(),
       };
-      commit(current);
+      await commit(current);
     } finally {
       running.current = false;
     }
   }
 
   async function startFreshSearch() {
-    if (running.current) return;
+    if (running.current || storageMode === "loading") return;
     const ready = worker.status === "ready" || (await checkWorker());
     if (!ready) return;
     const now = new Date().toISOString();
@@ -550,13 +728,17 @@ export default function SearchPanel({
       updatedAt: now,
       completedAt: queue.length ? null : now,
     };
-    commit(next);
+    await commit(next, [], true);
     setVisibleCount(40);
     if (queue.length) await runSearch(next);
   }
 
   async function resumeSearch() {
-    if (running.current || !sessionRef.current.queue.length) return;
+    if (
+      running.current ||
+      storageMode === "loading" ||
+      !sessionRef.current.queue.length
+    ) return;
     const ready = worker.status === "ready" || (await checkWorker());
     if (!ready) return;
     await runSearch(sessionRef.current);
@@ -572,11 +754,12 @@ export default function SearchPanel({
     });
   }
 
-  function resetSearch() {
+  async function resetSearch() {
     if (running.current) return;
     if (!window.confirm("Suchfortschritt und alle gefundenen Angebote löschen?")) return;
-    commit(EMPTY_SESSION);
-    window.localStorage.removeItem(SEARCH_STORAGE_KEY);
+    await commit(EMPTY_SESSION, [], true);
+    window.localStorage.removeItem(LEGACY_SEARCH_STORAGE_KEY);
+    setStorageNotice("");
     setVisibleCount(40);
   }
 
@@ -674,6 +857,26 @@ export default function SearchPanel({
             Kleinanzeigen-Ergebnisse geprüft. Fortschritt und Treffer bleiben lokal
             gespeichert; eine unterbrochene Suche kann fortgesetzt werden.
           </p>
+          <p className={`search-storage-status is-${storageMode}`}>
+            <strong>
+              {storageMode === "indexeddb"
+                ? "Erweiterter Suchspeicher aktiv"
+                : storageMode === "memory"
+                  ? "Nur im Arbeitsspeicher"
+                  : "Suchspeicher wird vorbereitet"}
+            </strong>
+            <span>
+              {storageEstimate.usage !== null
+                ? `${formatStorageBytes(storageEstimate.usage)} genutzt${
+                    storageEstimate.quota !== null
+                      ? ` · ${formatStorageBytes(storageEstimate.quota)} Kapazität`
+                      : ""
+                  }`
+                : `${Object.keys(session.results).length.toLocaleString("de-DE")} Angebote gespeichert`}
+            </span>
+          </p>
+          {retryNotice ? <p className="search-notice">{retryNotice}</p> : null}
+          {storageNotice ? <p className="search-notice">{storageNotice}</p> : null}
           {session.lastError ? <p className="search-error">{session.lastError}</p> : null}
           {storageWarning ? <p className="search-error">{storageWarning}</p> : null}
           <div className="search-actions">
@@ -688,15 +891,30 @@ export default function SearchPanel({
               </button>
             ) : session.queue.length && session.status !== "complete" ? (
               <>
-                <button className="primary-button" onClick={() => void resumeSearch()} type="button">
+                <button
+                  className="primary-button"
+                  disabled={storageMode === "loading"}
+                  onClick={() => void resumeSearch()}
+                  type="button"
+                >
                   Suche fortsetzen
                 </button>
-                <button className="secondary-button" onClick={() => void startFreshSearch()} type="button">
+                <button
+                  className="secondary-button"
+                  disabled={storageMode === "loading"}
+                  onClick={() => void startFreshSearch()}
+                  type="button"
+                >
                   Neu starten
                 </button>
               </>
             ) : (
-              <button className="primary-button" onClick={() => void startFreshSearch()} type="button">
+              <button
+                className="primary-button"
+                disabled={storageMode === "loading"}
+                onClick={() => void startFreshSearch()}
+                type="button"
+              >
                 {session.status === "complete" ? "Erneut vollständig suchen" : "Alle fehlenden suchen"}
               </button>
             )}
@@ -705,6 +923,7 @@ export default function SearchPanel({
               disabled={
                 session.status === "running" ||
                 session.status === "stopping" ||
+                storageMode === "loading" ||
                 (!session.requestCount && !Object.keys(session.results).length)
               }
               onClick={resetSearch}

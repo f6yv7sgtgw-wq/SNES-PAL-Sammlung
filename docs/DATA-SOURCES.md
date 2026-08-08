@@ -28,5 +28,6 @@ angefragt und fremde Quellenantworten führen zum Abbruch des Suchpakets.
 
 Ausgewertet werden Titel, Preis, Versandhinweise und der vom Parser gelieferte
 Beschreibungsanriss. Die Anwendung ruft keine Kleinanzeigen-Detailseiten selbst
-ab. Unvollständige Konvoluttexte, offene Versandkosten und unklare Zustände
-bleiben deshalb gelb.
+ab. Unvollständige Konvoluttexte bleiben deshalb **Unklar**. Offene
+Versandkosten und angenommene Zustände werden sichtbar gekennzeichnet; die
+Preisfarbe bleibt dabei eine reine Abweichung vom verfügbaren Richtwert.

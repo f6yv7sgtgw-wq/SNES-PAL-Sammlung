@@ -10,8 +10,11 @@
 4. Ein sanfter Stopp beendet den Lauf nach dem aktuellen Arbeitspaket. Der
    bestätigte Stand lässt sich nach Stopp, Fehler oder Browser-Neustart
    fortsetzen.
-5. Doppelte Anzeigen werden über ihre Kleinanzeigen-ID zusammengeführt.
-6. Zeichen mit Routenbedeutung werden nur für die Parserabfrage neutralisiert.
+5. Vorübergehende Netzwerk-, Timeout-, Drosselungs- und Serverfehler werden
+   für dasselbe Arbeitspaket automatisch zweimal wiederholt. Nach drei
+   Fehlschlägen bleibt der Fortsetzungspunkt unverändert gespeichert.
+6. Doppelte Anzeigen werden über ihre Kleinanzeigen-ID zusammengeführt.
+7. Zeichen mit Routenbedeutung werden nur für die Parserabfrage neutralisiert.
    So wird `Ranma 1/2` als `SNES Ranma 1 2` gesucht, die Trefferzuordnung nutzt
    aber weiterhin den vollständigen Katalogtitel.
 
@@ -53,3 +56,13 @@ Der GenericParser liefert den Beschreibungsanriss der Kleinanzeigen-
 Ergebnisseite. Die SNES-Anwendung greift nicht direkt auf Detailseiten zu.
 Deshalb bleibt jede möglicherweise unvollständige Konvolutbewertung unklar und
 muss in der verlinkten Anzeige bestätigt werden.
+
+## Lokale Speicherung
+
+Suchstatus und Angebote liegen getrennt in IndexedDB. Dadurch gilt nicht mehr
+die kleine `localStorage`-Grenze, die bei großen Vollsuchläufen erreicht wurde.
+Beim ersten Start von Version 0.3.2 wird der letzte lesbare Stand aus Version
+0.3.1 automatisch übernommen und erst nach erfolgreicher Migration entfernt.
+Jede Kleinanzeigen-ID belegt genau einen Datensatz; erneute Funde aktualisieren
+diesen Datensatz. Die konkrete Obergrenze verwaltet weiterhin der Browser. Die
+Oberfläche zeigt deshalb die vom Browser gemeldete Nutzung und Kapazität an.

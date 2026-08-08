@@ -1,4 +1,4 @@
-# SNES PAL Sammlung – Version 0.3.1
+# SNES PAL Sammlung – Version 0.3.2
 
 Ein für iPhone und Desktop optimierter Sammlungsmanager für europäische
 Super-Nintendo-Spiele.
@@ -19,11 +19,12 @@ Super-Nintendo-Spiele.
 - ausschließliche Anbindung des GenericParser an Kleinanzeigen
 - deutschlandweite Suche mit Versand; reine Abholangebote werden entfernt
 - sequenzieller Vollsuchlauf mit sanftem Stopp und lokal gespeichertem Fortsetzen
+- automatische Wiederholung vorübergehender Parser- und Netzwerkfehler
 - Prüfung von Titel und Beschreibungsanriss auf Repros, Defekte und Konvolute
 - Konvolut-Richtwert als Summe aller erkannten Spiele aus der Preisbibliothek
 - vierstufige Preisampel nach prozentualer Abweichung inklusive erkannter Versandkosten
 - neutrale Kennzeichnung für nicht belastbar bewertbare Angebote
-- lokale Speicherung im Browser
+- erweiterte lokale Suchspeicherung über IndexedDB mit automatischer Übernahme älterer Treffer
 - JSON-Datensicherung mit Export und Import
 - dunkle, touchfreundliche Oberfläche
 
@@ -62,6 +63,14 @@ gegen den unveränderten Katalogtitel geprüft werden. Dadurch lässt sich ein b
 diesem Titel unterbrochener Lauf ohne Verlust der gespeicherten Ergebnisse
 fortsetzen.
 
+Version 0.3.2 speichert Suchstand und Angebote nicht mehr als einen großen
+`localStorage`-Eintrag, sondern getrennt in IndexedDB. Beim ersten Laden werden
+vorhandene Treffer automatisch übernommen und anschließend nur noch geänderte
+Anzeigen aktualisiert. Vorübergehende Fehler wie Safaris `Load failed`, HTTP
+408/429 oder Serverfehler werden für dasselbe Arbeitspaket automatisch zweimal
+wiederholt. Erst wenn alle drei Versuche fehlschlagen, pausiert der Lauf mit
+unverändertem Fortsetzungspunkt.
+
 Bei der Titelzuordnung gewinnt die längste eindeutige Fundstelle. Ein Angebot
 für `Aero the Acro-Bat 2` zählt deshalb nicht zusätzlich den Richtwert von
 `Aero the Acro-Bat`. Getrennte Titelvorkommen in einem echten Konvolut werden
@@ -86,7 +95,9 @@ für diesen Titel deshalb bewusst einen Platzhalter.
 ## Daten
 
 Die persönliche Sammlung sowie Suchfortschritt und gefundene Angebote werden
-ausschließlich im lokalen Speicher des Browsers abgelegt. Der Katalog ist in
+ausschließlich im lokalen Speicher des Browsers abgelegt. Die Suchergebnisse
+liegen in IndexedDB; die Sammlungseinstellungen bleiben im kleinen
+Browserspeicher. Der Katalog ist in
 `app/snes-games.json` enthalten. Mit
 `scripts/extract_snes_guide.py` lässt er sich aus dem ursprünglichen PDF
 reproduzierbar neu erzeugen. `scripts/update-online-prices.mjs` prüft die
@@ -110,12 +121,14 @@ npm run build:pages
 ```
 
 `npm test` prüft unter anderem die vier Ampelgrenzen, Versandfilter, Repros,
-Konvolutsummen, Basis-/Fortsetzungstitel und alle 530 Katalogtitel auf falsche
-Mehrfachzuordnungen sowie routesichere Suchbegriffe. GitHub Pages führt Test
-und Build bei jedem Push auf `main` erneut aus.
+Konvolutsummen, Basis-/Fortsetzungstitel, die Wiederholung von `Load failed`
+und alle 530 Katalogtitel auf falsche Mehrfachzuordnungen sowie routesichere
+Suchbegriffe. GitHub Pages führt Test und Build bei jedem Push auf `main`
+erneut aus.
 
 ## Versionen
 
+- [`docs/VERSION-0.3.2.md`](docs/VERSION-0.3.2.md) – erweiterter Speicher und automatische Wiederholung
 - [`docs/VERSION-0.3.1.md`](docs/VERSION-0.3.1.md) – Ranma-Fortsetzungsfix und Prozentampel
 - [`docs/VERSION-0.3.md`](docs/VERSION-0.3.md) – Kleinanzeigen-Suche und Preisampel
 - [`docs/VERSION-0.2.md`](docs/VERSION-0.2.md) – vollständiger PAL-Katalog und Onlinepreise

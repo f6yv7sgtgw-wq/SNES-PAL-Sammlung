@@ -805,7 +805,7 @@ export default function CollectionManager({
               <div>
                 <div className="title-row">
                   <h1>SNES PAL Sammlung</h1>
-                  <span className="version-badge">Version 0.3.1</span>
+                  <span className="version-badge">Version 0.3.2</span>
                 </div>
                 <p>Sammlungsmanager mit 530 PAL-Spielen</p>
               </div>
@@ -1254,7 +1254,7 @@ export default function CollectionManager({
       </div>
 
       <footer>
-        <p>SNES PAL Sammlung · Version 0.3</p>
+        <p>SNES PAL Sammlung · Version 0.3.2</p>
         <p>Sammlung, Suchfortschritt und Treffer bleiben lokal in diesem Browser.</p>
       </footer>
 
