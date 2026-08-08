@@ -1,0 +1,68 @@
+name: Import complete SNES source
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  actions: write
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: snes-source-import
+  cancel-in-progress: false
+
+jobs:
+  import-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout carrier commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Import verified project history
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat import-payload/part-* > /tmp/snes-source.bundle
+          echo "66ea53615c96d96f9577a8c3c2695b5c8df82c3e6b76e533b4b46e4c8f16b71d  /tmp/snes-source.bundle" | sha256sum --check --strict
+          git bundle verify /tmp/snes-source.bundle
+          git fetch /tmp/snes-source.bundle refs/heads/github-export:refs/remotes/site/github-export
+          test "$(git rev-parse refs/remotes/site/github-export)" = "90a779c2fcfe9818ebb767785ff90a3c17dc46ea"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git merge --allow-unrelated-histories --no-commit --no-ff refs/remotes/site/github-export
+          git rm -r import-payload .github/workflows/import-source.yml
+          git commit -m "Import complete SNES PAL collection manager 0.2"
+          git push origin HEAD:main
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+          cache: npm
+
+      - name: Build GitHub Pages
+        run: |
+          npm ci
+          npm run build:pages
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: github-pages-dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
