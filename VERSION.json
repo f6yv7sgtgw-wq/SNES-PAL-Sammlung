@@ -1,6 +1,6 @@
 {
   "product": "SNES PAL Sammlung",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "release_date": "2026-08-09",
   "catalog_games": 530,
   "cover_images": 529,
@@ -20,7 +20,24 @@
     "red": "41 percent or more above reference, or unsuitable",
     "unknown": "price, title match, or bundle contents cannot be evaluated"
   },
-  "storage": "indexeddb-search; localstorage-collection",
+  "storage": "indexeddb-search; localstorage-collection-v2",
+  "collection_schema": {
+    "version": 2,
+    "components": ["module", "box", "manual"],
+    "flags": ["completeInBox", "sealed"],
+    "quantity": true,
+    "partial_value": "sum of selected component guide values",
+    "cib_value": "cib guide value",
+    "sealed_value": "new guide value",
+    "legacy_v1_migration": true
+  },
+  "embedded_collection": {
+    "source": "SNES_GAMES.xlsx",
+    "catalog_games": 118,
+    "copies": 120,
+    "purchase_total_eur": 2042.0,
+    "unmatched_accessories": ["Super Game Boy"]
+  },
   "result_sorting": {
     "fixed_color_order": ["green", "yellow", "orange", "red", "unknown"],
     "within_color_fields": ["offer", "reference", "difference_eur", "difference_percent", "title"],
