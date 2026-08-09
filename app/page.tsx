@@ -1,7 +1,7 @@
 import CollectionManager, {
   type Game,
   type PriceMeta,
-} from "./collection-manager-v034";
+} from "./project-snes-manager";
 import catalog from "./snes-games.json";
 
 export default function Home() {
