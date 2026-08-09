@@ -26,9 +26,18 @@ import {
   saveStoredSearch,
   type BrowserStorageEstimate,
 } from "./search-storage";
+import {
+  DEFAULT_RESULT_SORT,
+  isResultSortDirection,
+  isResultSortKey,
+  sortOffersInColorGroups,
+  type ResultSortDirection,
+  type ResultSortKey,
+} from "./search-sort";
 
 const GENERIC_PARSER_URL = "https://genericparser.f6yv7sgtgw.workers.dev";
 const SEARCH_CONTRACT = "generic-parser-module-v1";
+const SEARCH_SORT_STORAGE_KEY = "snes-pal-search-sort-v1";
 
 type RunStatus = "idle" | "running" | "stopping" | "paused" | "complete" | "error";
 
@@ -239,6 +248,12 @@ export default function SearchPanel({
   });
   const [trafficFilter, setTrafficFilter] = useState<OfferColor | "all">("all");
   const [resultQuery, setResultQuery] = useState("");
+  const [resultSortKey, setResultSortKey] = useState<ResultSortKey>(
+    DEFAULT_RESULT_SORT.key,
+  );
+  const [resultSortDirection, setResultSortDirection] =
+    useState<ResultSortDirection>(DEFAULT_RESULT_SORT.direction);
+  const [sortPreferenceLoaded, setSortPreferenceLoaded] = useState(false);
   const [visibleCount, setVisibleCount] = useState(40);
   const [storageWarning, setStorageWarning] = useState("");
   const [storageNotice, setStorageNotice] = useState("");
@@ -267,6 +282,44 @@ export default function SearchPanel({
   useEffect(() => {
     ownedIdsRef.current = ownedIds;
   }, [ownedIds]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      try {
+        const stored = window.localStorage.getItem(SEARCH_SORT_STORAGE_KEY);
+        if (stored) {
+          const preference = JSON.parse(stored) as {
+            key?: unknown;
+            direction?: unknown;
+          };
+          if (isResultSortKey(preference.key)) setResultSortKey(preference.key);
+          if (isResultSortDirection(preference.direction)) {
+            setResultSortDirection(preference.direction);
+          }
+        }
+      } catch {
+        // A damaged preference must not block the search results.
+      } finally {
+        setSortPreferenceLoaded(true);
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!sortPreferenceLoaded) return;
+    try {
+      window.localStorage.setItem(
+        SEARCH_SORT_STORAGE_KEY,
+        JSON.stringify({
+          key: resultSortKey,
+          direction: resultSortDirection,
+        }),
+      );
+    } catch {
+      // Sorting remains available even when browser preferences cannot persist.
+    }
+  }, [resultSortDirection, resultSortKey, sortPreferenceLoaded]);
 
   useEffect(() => {
     mounted.current = true;
@@ -765,14 +818,7 @@ export default function SearchPanel({
 
   const offers = useMemo(() => {
     const normalizedQuery = resultQuery.trim().toLocaleLowerCase("de-DE");
-    const colorOrder: Record<OfferColor, number> = {
-      green: 0,
-      yellow: 1,
-      orange: 2,
-      red: 3,
-      unknown: 4,
-    };
-    return Object.values(session.results)
+    const filteredOffers = Object.values(session.results)
       .filter((offer) => trafficFilter === "all" || offer.color === trafficFilter)
       .filter((offer) => {
         if (!normalizedQuery) return true;
@@ -782,13 +828,29 @@ export default function SearchPanel({
         return `${offer.title} ${offer.description} ${gameTitles}`
           .toLocaleLowerCase("de-DE")
           .includes(normalizedQuery);
-      })
-      .sort((left, right) => {
-        const color = colorOrder[left.color] - colorOrder[right.color];
-        if (color) return color;
-        return (right.differenceCents ?? -Infinity) - (left.differenceCents ?? -Infinity);
       });
-  }, [gameById, resultQuery, session.results, trafficFilter]);
+    return sortOffersInColorGroups(
+      filteredOffers,
+      resultSortKey,
+      resultSortDirection,
+    );
+  }, [
+    gameById,
+    resultQuery,
+    resultSortDirection,
+    resultSortKey,
+    session.results,
+    trafficFilter,
+  ]);
+
+  const directionLabel =
+    resultSortKey === "title"
+      ? resultSortDirection === "asc"
+        ? "A–Z"
+        : "Z–A"
+      : resultSortDirection === "asc"
+        ? "Niedrig zuerst"
+        : "Hoch zuerst";
 
   const offerCounts = useMemo(() => {
     const counts: Record<OfferColor, number> = {
@@ -996,6 +1058,46 @@ export default function SearchPanel({
             value={resultQuery}
           />
         </label>
+        <div className="result-sort-controls">
+          <label className="result-sort-select">
+            <span>Innerhalb jeder Farbe sortieren nach</span>
+            <select
+              onChange={(event) => {
+                setResultSortKey(event.target.value as ResultSortKey);
+                setVisibleCount(40);
+              }}
+              value={resultSortKey}
+            >
+              <option value="offer">Angebotspreis</option>
+              <option value="reference">Richtwert</option>
+              <option value="difference">Differenz in Euro</option>
+              <option value="deviation">Differenz in Prozent</option>
+              <option value="title">Spieltitel</option>
+            </select>
+          </label>
+          <button
+            aria-label={`Sortierrichtung ändern, aktuell ${directionLabel}`}
+            className="secondary-button result-sort-direction"
+            onClick={() => {
+              setResultSortDirection((current) =>
+                current === "asc" ? "desc" : "asc",
+              );
+              setVisibleCount(40);
+            }}
+            title={`Sortierrichtung: ${directionLabel}`}
+            type="button"
+          >
+            <span aria-hidden="true">
+              {resultSortDirection === "asc" ? "↑" : "↓"}
+            </span>
+            {directionLabel}
+          </button>
+        </div>
+      </div>
+      <div className="search-filter-row">
+        <span className="sort-order-note">
+          Farbfolge bleibt: Grün → Gelb → Orange → Rot → Unklar
+        </span>
         <div className="traffic-filters" aria-label="Ampelfilter">
           {(["all", "green", "yellow", "orange", "red", "unknown"] as const).map((color) => (
             <button

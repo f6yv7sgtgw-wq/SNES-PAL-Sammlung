@@ -1,7 +1,7 @@
 {
   "product": "SNES PAL Sammlung",
-  "version": "0.3.2",
-  "release_date": "2026-08-08",
+  "version": "0.3.3",
+  "release_date": "2026-08-09",
   "catalog_games": 530,
   "cover_images": 529,
   "available_price_values": 2647,
@@ -21,6 +21,13 @@
     "unknown": "price, title match, or bundle contents cannot be evaluated"
   },
   "storage": "indexeddb-search; localstorage-collection",
+  "result_sorting": {
+    "fixed_color_order": ["green", "yellow", "orange", "red", "unknown"],
+    "within_color_fields": ["offer", "reference", "difference_eur", "difference_percent", "title"],
+    "directions": ["ascending", "descending"],
+    "default": "difference_percent ascending",
+    "preference_storage": "localstorage"
+  },
   "transient_packet_attempts": 3,
   "repository": "f6yv7sgtgw-wq/SNES-PAL-Sammlung"
 }

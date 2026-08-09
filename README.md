@@ -1,4 +1,4 @@
-# SNES PAL Sammlung – Version 0.3.2
+# SNES PAL Sammlung – Version 0.3.3
 
 Ein für iPhone und Desktop optimierter Sammlungsmanager für europäische
 Super-Nintendo-Spiele.
@@ -24,6 +24,9 @@ Super-Nintendo-Spiele.
 - Konvolut-Richtwert als Summe aller erkannten Spiele aus der Preisbibliothek
 - vierstufige Preisampel nach prozentualer Abweichung inklusive erkannter Versandkosten
 - neutrale Kennzeichnung für nicht belastbar bewertbare Angebote
+- feste Ergebnisgruppen Grün, Gelb, Orange, Rot und Unklar mit frei wählbarer
+  Sortierung innerhalb jeder Farbe nach Angebot, Richtwert, Eurodifferenz,
+  Prozentdifferenz oder Spieltitel
 - erweiterte lokale Suchspeicherung über IndexedDB mit automatischer Übernahme älterer Treffer
 - JSON-Datensicherung mit Export und Import
 - dunkle, touchfreundliche Oberfläche
@@ -70,6 +73,12 @@ Anzeigen aktualisiert. Vorübergehende Fehler wie Safaris `Load failed`, HTTP
 408/429 oder Serverfehler werden für dasselbe Arbeitspaket automatisch zweimal
 wiederholt. Erst wenn alle drei Versuche fehlschlagen, pausiert der Lauf mit
 unverändertem Fortsetzungspunkt.
+
+Version 0.3.3 hält die Ampelfolge unabhängig von der gewählten Sortierung fest.
+Innerhalb jeder Farbe lassen sich die Treffer auf- oder absteigend nach
+Angebotspreis, Richtwert, Differenz in Euro, Differenz in Prozent oder
+Spieltitel ordnen. Standardmäßig stehen die relativ günstigsten Angebote oben;
+die Auswahl bleibt nach einem Neuladen erhalten.
 
 Bei der Titelzuordnung gewinnt die längste eindeutige Fundstelle. Ein Angebot
 für `Aero the Acro-Bat 2` zählt deshalb nicht zusätzlich den Richtwert von
@@ -120,7 +129,8 @@ npm run lint
 npm run build:pages
 ```
 
-`npm test` prüft unter anderem die vier Ampelgrenzen, Versandfilter, Repros,
+`npm test` prüft unter anderem die vier Ampelgrenzen, die feste Farbfolge und
+alle Sortierfelder, Versandfilter, Repros,
 Konvolutsummen, Basis-/Fortsetzungstitel, die Wiederholung von `Load failed`
 und alle 530 Katalogtitel auf falsche Mehrfachzuordnungen sowie routesichere
 Suchbegriffe. GitHub Pages führt Test und Build bei jedem Push auf `main`
@@ -128,6 +138,7 @@ erneut aus.
 
 ## Versionen
 
+- [`docs/VERSION-0.3.3.md`](docs/VERSION-0.3.3.md) – feste Farbgruppen und Sortierung innerhalb der Gruppen
 - [`docs/VERSION-0.3.2.md`](docs/VERSION-0.3.2.md) – erweiterter Speicher und automatische Wiederholung
 - [`docs/VERSION-0.3.1.md`](docs/VERSION-0.3.1.md) – Ranma-Fortsetzungsfix und Prozentampel
 - [`docs/VERSION-0.3.md`](docs/VERSION-0.3.md) – Kleinanzeigen-Suche und Preisampel

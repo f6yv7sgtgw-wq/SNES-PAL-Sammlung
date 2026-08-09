@@ -50,6 +50,19 @@ Repros, Defekte, Gesuche und reine Verpackungs-/Anleitungsangebote sind rot.
 Ein nicht eindeutig genannter Zustand nutzt konservativ den Modul-Richtwert;
 die Annahme wird in der Trefferkarte angezeigt.
 
+## Sortierung der Ergebnisse
+
+Die Hauptreihenfolge ist fest und wird von keiner Sortierung verändert:
+**Grün → Gelb → Orange → Rot → Unklar**. Innerhalb jeder Farbgruppe können die
+Angebote auf- oder absteigend nach Angebotspreis, Richtwert, Differenz in Euro,
+Differenz in Prozent oder Spieltitel sortiert werden. Nicht verfügbare Werte
+stehen innerhalb ihrer Gruppe immer am Ende.
+
+Standard ist **Differenz in Prozent · niedrig zuerst**, sodass innerhalb jeder
+Farbe das relativ günstigste Angebot zuerst erscheint. Die gewählte Sortierung
+und Richtung werden als kleine Browserpräferenz gespeichert; Suchergebnisse und
+Suchfortschritt bleiben davon unberührt.
+
 ## Technische Grenze
 
 Der GenericParser liefert den Beschreibungsanriss der Kleinanzeigen-
