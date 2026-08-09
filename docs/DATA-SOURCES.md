@@ -19,6 +19,26 @@ Die ursprünglichen Guide-Werte bleiben im Datensatz unter `guidePrices`
 erhalten. Marktpreise sind Richtwerte; Zustand, Vollständigkeit, Sprachfassung
 und regionale Verpackung können den tatsächlichen Verkaufspreis beeinflussen.
 
+## Persönlicher Ausgangsbestand
+
+Version 0.3.4 enthält den aus `SNES_GAMES.xlsx` übernommenen Ausgangsbestand
+direkt in `app/initial-collection.ts`.
+
+- 118 Katalogspiele
+- 120 Exemplare
+- 2.042,00 € Kaufpreise aus Spalte C
+- Spalte D steuert die Komponenten:
+  - `CIB` = Modul + Box + Anleitung und vollständiges CIB
+  - `Anleitung` = Modul + Anleitung
+  - `OVP ohne Anleitung` = Modul + Box
+  - `CIB (ohne Inlay)` = alle drei Kernkomponenten, aber nicht als vollständiges CIB
+  - `x2` = Anzahl 2
+- freie Zusatzangaben bleiben als Notiz erhalten
+
+`Super Game Boy` ist Hardware/Zubehör und deshalb kein Eintrag im
+530-Spiele-Katalog. Es wird als nicht zugeordnete Excel-Zeile dokumentiert,
+aber nicht als Spiel in den Katalog eingefügt.
+
 ## Kleinanzeigen
 
 Version 0.3 bezieht Live-Angebote ausschließlich über den öffentlichen
