@@ -1,8 +1,8 @@
 import { createRoot } from "react-dom/client";
-import CollectionManager, {
+import ProjectSnesManager, {
   type Game,
   type PriceMeta,
-} from "../app/collection-manager";
+} from "../app/project-snes-manager";
 import catalog from "../app/snes-games.json";
 import "../app/globals.css";
 
@@ -18,7 +18,7 @@ const root = document.getElementById("root");
 if (!root) throw new Error("Root element is missing");
 
 createRoot(root).render(
-  <CollectionManager
+  <ProjectSnesManager
     games={games}
     priceMeta={catalog.meta as PriceMeta}
   />,
