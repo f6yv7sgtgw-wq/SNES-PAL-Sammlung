@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SNES PAL Sammlung",
+  title: "Projekt SNES",
   description:
     "Mobiler Sammlungsmanager für 530 europäische SNES-PAL-Spiele mit aktuellen Richtwerten und integrierter Kleinanzeigen-Suche.",
   other: {
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "SNES Sammlung",
+    title: "Projekt SNES",
   },
 };
 
