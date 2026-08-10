@@ -1,10 +1,10 @@
-const DATABASE_NAME = "snes-pal-sammlung-search";
+const DATABASE_NAME = "snes-pal-sammlung-search-v0352";
 const DATABASE_VERSION = 1;
 const STATE_STORE = "state";
 const OFFER_STORE = "offers";
 const ACTIVE_STATE_KEY = "active";
 
-export const LEGACY_SEARCH_STORAGE_KEY = "snes-pal-kleinanzeigen-search-v03-2";
+export const LEGACY_SEARCH_STORAGE_KEY = "snes-pal-kleinanzeigen-search-v0352";
 
 export type StoredSearchSnapshot = {
   state: Record<string, unknown>;
