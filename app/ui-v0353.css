@@ -1,0 +1,5 @@
+/* Project SNES 0.3.5.3 – accessory-only search-condition hotfix. */
+
+.version-badge::after {
+  content: "v0.3.5.3";
+}
