@@ -46,42 +46,9 @@ export default function ProjectSnesManager({
 
     const heading = document.querySelector<HTMLHeadingElement>(".title-row h1");
     if (heading) heading.textContent = "Projekt SNES";
+    const badge = document.querySelector<HTMLElement>(".version-badge");
+    if (badge) badge.textContent = "v0.3.5";
   }, [games]);
 
-  return (
-    <>
-      <style>{`
-        .title-row h1 {
-          font-size: 0 !important;
-          max-width: none !important;
-        }
-        .title-row h1::after {
-          content: "Projekt SNES";
-          font-size: clamp(1.08rem, 2vw, 1.45rem);
-          font-weight: 740;
-          letter-spacing: -0.03em;
-          white-space: nowrap;
-        }
-        @media (max-width: 720px) {
-          .version-badge {
-            display: inline-flex !important;
-            padding: 3px 6px !important;
-            font-size: 0 !important;
-          }
-          .version-badge::after {
-            content: "v0.3.4";
-            font-size: 0.62rem;
-            font-weight: 760;
-            letter-spacing: 0.02em;
-          }
-        }
-        @media (max-width: 440px) {
-          .title-row h1::after {
-            font-size: 1rem;
-          }
-        }
-      `}</style>
-      <CollectionManager games={games} priceMeta={priceMeta} />
-    </>
-  );
+  return <CollectionManager games={games} priceMeta={priceMeta} />;
 }
