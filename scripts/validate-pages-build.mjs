@@ -19,10 +19,14 @@ const indexHtml = await readFile(path.join(root, "index.html"), "utf8");
 const files = await collect(root);
 const corpus = (await Promise.all(files.map((file) => readFile(file, "utf8")))).join("\n");
 
-assert.match(indexHtml, /<title>Projekt SNES · v0\.3\.4<\/title>/);
+assert.match(indexHtml, /<title>Projekt SNES · v0\.3\.5<\/title>/);
 assert.match(corpus, /Projekt SNES/);
 assert.match(corpus, /snes-pal-sammlung-baseline-0\.3\.4/);
-assert.match(corpus, /v0\.3\.4/);
+assert.match(corpus, /v0\.3\.5/);
 assert.match(corpus, /SNES_GAMES\.xlsx/);
+assert.match(corpus, /offer-description/);
+assert.match(corpus, /ui-v035/);
 
-console.log("Validated GitHub Pages artifact: Project SNES v0.3.4 and embedded collection bootstrap are present.");
+console.log(
+  "Validated GitHub Pages artifact: Project SNES v0.3.5, embedded collection bootstrap and responsive UI are present.",
+);
