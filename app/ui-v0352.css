@@ -1,0 +1,5 @@
+/* Project SNES 0.3.5.2 – condition-aware price comparison hotfix. */
+
+.version-badge::after {
+  content: "v0.3.5.2";
+}
