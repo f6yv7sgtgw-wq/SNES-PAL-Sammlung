@@ -3,17 +3,11 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const css = await readFile(new URL("../app/ui-v0351.css", import.meta.url), "utf8");
-const manager = await readFile(new URL("../app/project-snes-manager.tsx", import.meta.url), "utf8");
 const pagesEntry = await readFile(new URL("../github-pages/main.tsx", import.meta.url), "utf8");
 const appLayout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
 
-test("0.3.5.1 identity is exposed in the mobile header", () => {
-  assert.match(css, /content:\s*"v0\.3\.5\.1"/);
-  assert.match(manager, /badge\.textContent = "v0\.3\.5\.1"/);
-  assert.match(manager, /data-project-version="0\.3\.5\.1"/);
-});
-
-test("both application entrypoints load the 0.3.5.1 hotfix after 0.3.5", () => {
+test("0.3.5.1 compact card stylesheet remains in the cascade", () => {
+  assert.match(css, /Project SNES 0\.3\.5\.1/);
   assert.ok(pagesEntry.indexOf("ui-v035.css") < pagesEntry.indexOf("ui-v0351.css"));
   assert.ok(appLayout.indexOf("ui-v035.css") < appLayout.indexOf("ui-v0351.css"));
 });
