@@ -1,6 +1,6 @@
 {
   "product": "Projekt SNES",
-  "version": "0.3.5.1",
+  "version": "0.3.5.2",
   "release_date": "2026-08-10",
   "catalog_games": 530,
   "cover_images": 529,
@@ -20,7 +20,18 @@
     "red": "41 percent or more above reference, or unsuitable",
     "unknown": "price, title match, or bundle contents cannot be evaluated"
   },
-  "storage": "indexeddb-search; localstorage-collection-v2",
+  "search_condition_pricing": {
+    "module": "module guide value",
+    "module_manual": "module plus manual guide values",
+    "module_box": "module plus box guide values",
+    "cib": "dedicated CIB guide value",
+    "sealed": "new/sealed guide value",
+    "unclear": "module guide value as conservative fallback",
+    "ovp_without_manual": "module plus box",
+    "ovp_only_ambiguous": "module guide value as conservative fallback"
+  },
+  "storage": "indexeddb-search-v0352; localstorage-collection-v2",
+  "search_cache_reset": "0.3.5.2 starts a new IndexedDB search cache because stored offers from older versions may contain incorrect reference semantics",
   "collection_schema": {
     "version": 2,
     "components": ["module", "box", "manual"],
@@ -56,8 +67,7 @@
     "search_price_and_evaluation_visible": true,
     "mobile_comparison_columns": 3,
     "mobile_reason_lines": 1,
-    "mobile_actions": "two compact 36px buttons; single action spans full width",
-    "hotfix_reason": "remove inherited vertical 120px flex basis from phone offer actions"
+    "mobile_actions": "two compact 36px buttons; single action spans full width"
   },
   "transient_packet_attempts": 3,
   "repository": "f6yv7sgtgw-wq/SNES-PAL-Sammlung"
