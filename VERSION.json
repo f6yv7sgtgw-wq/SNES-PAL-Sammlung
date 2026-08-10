@@ -1,6 +1,6 @@
 {
   "product": "Projekt SNES",
-  "version": "0.3.5",
+  "version": "0.3.5.1",
   "release_date": "2026-08-10",
   "catalog_games": 530,
   "cover_images": 529,
@@ -50,10 +50,14 @@
     "financial_value_mobile_layout": "stack below label when necessary",
     "responsive_numeric_scaling": true,
     "search_card_reference": "GenericParser 1.5 compact side-by-side media",
-    "search_thumbnail": "small square",
+    "search_thumbnail": "64px square on phone, 58px on very narrow phone",
     "listing_description_visible": false,
     "search_title_visible": true,
-    "search_price_and_evaluation_visible": true
+    "search_price_and_evaluation_visible": true,
+    "mobile_comparison_columns": 3,
+    "mobile_reason_lines": 1,
+    "mobile_actions": "two compact 36px buttons; single action spans full width",
+    "hotfix_reason": "remove inherited vertical 120px flex basis from phone offer actions"
   },
   "transient_packet_attempts": 3,
   "repository": "f6yv7sgtgw-wq/SNES-PAL-Sammlung"
