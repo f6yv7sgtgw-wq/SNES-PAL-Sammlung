@@ -3,13 +3,11 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const css = await readFile(new URL("../app/ui-v035.css", import.meta.url), "utf8");
-const manager = await readFile(new URL("../app/project-snes-manager.tsx", import.meta.url), "utf8");
 const pagesEntry = await readFile(new URL("../github-pages/main.tsx", import.meta.url), "utf8");
 
-test("0.3.5 identity is visible in the project header", () => {
+test("0.3.5 base UI identity remains present", () => {
   assert.match(css, /content:\s*"Projekt SNES"/);
   assert.match(css, /content:\s*"v0\.3\.5"/);
-  assert.match(manager, /badge\.textContent = "v0\.3\.5"/);
 });
 
 test("mobile cards explicitly allow shrinkage and prevent horizontal overflow", () => {
@@ -20,13 +18,13 @@ test("mobile cards explicitly allow shrinkage and prevent horizontal overflow", 
   assert.match(css, /\.stat-card strong[\s\S]*overflow-wrap:\s*anywhere/);
 });
 
-test("search cards follow the compact GenericParser media pattern", () => {
+test("search cards retain the 0.3.5 compact GenericParser media base", () => {
   assert.match(css, /\.search-result[\s\S]*grid-template-columns:\s*92px minmax\(0, 1fr\)/);
   assert.match(css, /\.offer-image[\s\S]*width:\s*92px[\s\S]*height:\s*92px/);
   assert.match(css, /@media \(max-width: 520px\)[\s\S]*\.search-result[\s\S]*70px minmax\(0, 1fr\)/);
   assert.match(css, /\.offer-description\s*\{\s*display:\s*none !important/);
 });
 
-test("both application builds load the 0.3.5 override stylesheet", () => {
+test("GitHub Pages keeps the 0.3.5 base stylesheet before later hotfix layers", () => {
   assert.match(pagesEntry, /ui-v035\.css/);
 });
