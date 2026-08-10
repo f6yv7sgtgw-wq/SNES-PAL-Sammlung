@@ -26,6 +26,41 @@ Beschreibungsanriss keinen Versandhinweis, wird die Ampel auf Basis des
 Angebotspreises vor Versand berechnet. Die Karte trägt dann deutlich den
 Hinweis **Versand offen**.
 
+## Spielbestand und Zubehörfilter
+
+Vor dem Preisvergleich wird geprüft, ob tatsächlich ein Spiel oder Modul
+angeboten wird. Reine Zubehörtreffer gehören nicht in die Kaufsuche nach
+fehlenden Spielen und werden seit Version 0.3.5.3 vollständig verworfen.
+
+Verworfen werden insbesondere:
+
+- reine `Spielanleitung`-, `Anleitung`-, `Manual`- und `Handbuch`-Angebote
+- Formulierungen wie `Anleitung für das Spiel`
+- `Leerbox`, `Leerverpackung`, `nur OVP`, `nur Box`
+- Box-/Anleitungsangebote mit `ohne Spiel`, `ohne Modul`, `kein Modul`,
+  `Modul nicht dabei`, `Spiel fehlt` oder vergleichbaren Negationen
+
+Ein vorhandenes Wort wie `Anleitung` reicht also nicht mehr aus, um automatisch
+`Modul + Anleitung` anzunehmen. Ebenso reicht `OVP` allein nicht für CIB oder
+`Modul + Box`.
+
+## Zustandsabhängiger Richtwert
+
+Nach dem Zubehörfilter wird der Lieferumfang ermittelt und genau der dazu
+passende Richtwert verwendet:
+
+- **Modul** → Modul-Richtwert
+- **Modul + Anleitung** → Modul-Richtwert + Anleitungs-Richtwert
+- **Modul + Box** → Modul-Richtwert + Box-Richtwert
+- **CIB** → direkter CIB-Richtwert
+- **Neu / Sealed** → direkter Neu-/Sealed-Richtwert
+- **Zustand unklar** → konservativ Modul-Richtwert
+
+`Modul + Anleitung` setzt ein tatsächliches Modul-/Spielsignal plus Anleitung
+voraus. `Modul + Box` setzt ebenfalls ein Spiel-/Modulsignal voraus; bei
+`ohne Anleitung` muss aus dem Angebot weiterhin hervorgehen, dass das Spiel
+selbst enthalten ist. Ein explizites `CIB`- oder Sealed-Signal bleibt eindeutig.
+
 ## Einzelspiele und Konvolute
 
 Für Einzelangebote wird der längste eindeutig erkannte Katalogtitel verwendet.
@@ -46,9 +81,11 @@ Angebot neutral als **Unklar** markiert und nicht künstlich günstig gerechnet.
 - **Rot:** ab gerundeten 41 Prozent über dem Richtwert oder fachlich unpassend
 - **Unklar:** Preis, Titelzuordnung oder Konvolutinhalt nicht belastbar bewertbar
 
-Repros, Defekte, Gesuche und reine Verpackungs-/Anleitungsangebote sind rot.
-Ein nicht eindeutig genannter Zustand nutzt konservativ den Modul-Richtwert;
-die Annahme wird in der Trefferkarte angezeigt.
+Repros, Defekte und Gesuche bleiben unpassende rote Treffer. Reine
+Verpackungs-/Anleitungsangebote werden dagegen seit 0.3.5.3 bereits vor der
+Ampelbewertung aus der Spielsuche entfernt. Ein nicht eindeutig genannter
+**Zustand** nutzt konservativ den Modul-Richtwert; die Annahme wird in der
+Trefferkarte angezeigt.
 
 ## Sortierung der Ergebnisse
 
@@ -74,8 +111,13 @@ muss in der verlinkten Anzeige bestätigt werden.
 
 Suchstatus und Angebote liegen getrennt in IndexedDB. Dadurch gilt nicht mehr
 die kleine `localStorage`-Grenze, die bei großen Vollsuchläufen erreicht wurde.
-Beim ersten Start von Version 0.3.2 wird der letzte lesbare Stand aus Version
+Beim ersten Start von Version 0.3.2 wurde der letzte lesbare Stand aus Version
 0.3.1 automatisch übernommen und erst nach erfolgreicher Migration entfernt.
 Jede Kleinanzeigen-ID belegt genau einen Datensatz; erneute Funde aktualisieren
 diesen Datensatz. Die konkrete Obergrenze verwaltet weiterhin der Browser. Die
 Oberfläche zeigt deshalb die vom Browser gemeldete Nutzung und Kapazität an.
+
+Da 0.3.5.3 die Zubehör- und Zustandslogik fachlich ändert, verwendet diese
+Version einen neuen Suchspeicher `snes-pal-sammlung-search-v0353`. Alte Treffer
+werden damit nicht mit veralteter Klassifizierung weiter angezeigt. Die
+Sammlungsdaten liegen davon getrennt und bleiben unverändert.
