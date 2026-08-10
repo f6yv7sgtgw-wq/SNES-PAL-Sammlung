@@ -1,4 +1,4 @@
-# Projekt SNES – Version 0.3.5.2
+# Projekt SNES – Version 0.3.5.3
 
 Ein für iPhone und Desktop optimierter Sammlungsmanager für europäische
 Super-Nintendo-Spiele.
@@ -23,8 +23,9 @@ Super-Nintendo-Spiele.
 - deutschlandweite Suche mit Versand; reine Abholangebote werden entfernt
 - sequenzieller Vollsuchlauf mit sanftem Stopp und lokal gespeichertem Fortsetzen
 - automatische Wiederholung vorübergehender Parser- und Netzwerkfehler
-- Prüfung von Titel und Beschreibungsdaten auf Repros, Defekte und Konvolute
+- Prüfung von Titel und Beschreibungsdaten auf Repros, Defekte, Zubehör und Konvolute
 - zustandsabhängiger Preisvergleich für Modul, Modul + Anleitung, Modul + Box, CIB und Sealed
+- reine Anleitungs-, Leerbox- und Verpackungsangebote ohne Spiel/Modul werden verworfen
 - konservativer Modul-Richtwert bei unklarem Angebotszustand
 - Konvolut-Richtwert als Summe aller erkannten Spiele aus der Preisbibliothek
 - vierstufige Preisampel nach prozentualer Abweichung inklusive erkannter Versandkosten
@@ -37,6 +38,35 @@ Super-Nintendo-Spiele.
 - JSON-Datensicherung mit Export und Import
 - dunkle, touchfreundliche Oberfläche
 
+## Zubehörfilter 0.3.5.3
+
+0.3.5.3 korrigiert die im Asterix-Beispiel sichtbare Fehlklassifizierung von
+reinen Zubehörangeboten. Ein Titel wie **„Asterix – Spielanleitung – Super
+Nintendo SNES“** enthält kein angebotenes Modul und darf deshalb nicht als
+**Modul + Anleitung** gegen die Summe beider Richtwerte bewertet werden.
+
+Die Suchlogik trennt ab 0.3.5.3 zunächst zwischen einem tatsächlich angebotenen
+Spiel/Modul und Zubehör:
+
+- **nur Anleitung / Spielanleitung / Manual / Handbuch** → Treffer verwerfen
+- **Leerbox / Leerverpackung / nur OVP / nur Box** → Treffer verwerfen
+- **Box oder Anleitung mit ausdrücklich fehlendem Spiel/Modul** → Treffer verwerfen
+- **Modul + Anleitung** → nur bei erkennbarem Spiel-/Modulsignal plus Anleitung
+- **Modul + Box** → nur bei erkennbarem Spiel-/Modulsignal plus Box; bei
+  `ohne Anleitung` muss ebenfalls ein Spiel-/Modulsignal vorhanden sein
+- **CIB** → explizites CIB-Signal oder Spiel/Modul + Box + Anleitung
+- **Neu / Sealed** → Sealed-/Versiegelt-Signal
+- **Zustand weiterhin unklar** → konservativ Modul-Richtwert
+
+Damit wird z. B. eine einzelne Asterix-Anleitung nicht mehr gegen
+`Modul + Anleitung` bewertet. Ein tatsächliches **„Asterix Modul mit Anleitung“**
+verwendet weiterhin Modul- plus Anleitungsrichtwert, während **„Asterix mit OVP
+und Anleitung … Spiel“** den CIB-Richtwert verwendet.
+
+Weil gespeicherte Treffer aus 0.3.5.2 noch Zubehör-Fehlklassifizierungen
+enthalten können, nutzt 0.3.5.3 erneut einen frischen IndexedDB-Suchspeicher.
+Die persönliche Sammlung und Kaufpreise werden dadurch nicht verändert.
+
 ## Preisvergleich 0.3.5.2
 
 0.3.5.2 korrigiert die Zuordnung von Angeboten zu den Preisrichtwerten. Vor der
@@ -45,20 +75,16 @@ sofern vorhanden – dem Zustandsfeld des GenericParser erkannt.
 
 - **Nur Modul** → Modul-Richtwert
 - **Modul + Anleitung** → Modul-Richtwert + Anleitungs-Richtwert
-- **Modul + Box / OVP ohne Anleitung** → Modul-Richtwert + Box-Richtwert
+- **Modul + Box / OVP ohne Anleitung** → Modul-Richtwert + Box-Richtwert, sofern
+  das Spiel/Modul selbst sicher Bestandteil des Angebots ist
 - **CIB / vollständig mit OVP und Anleitung** → direkter CIB-Richtwert
 - **Neu / Sealed** → direkter Neu-/Sealed-Richtwert
 - **Zustand unklar** → konservativ der Modul-Richtwert
 
-Eine alleinige Angabe wie `OVP` reicht damit nicht mehr aus, um automatisch den
+Eine alleinige Angabe wie `OVP` reicht nicht aus, um automatisch den
 CIB-Richtwert zu verwenden. Wenn Anleitung bzw. vollständiger Lieferumfang nicht
 sicher erkennbar sind, zeigt die Kachel **Unklar · Modul-Richtwert** und bewertet
 das Angebot gegen den Modulwert.
-
-Bereits gespeicherte Suchresultate älterer Versionen können noch auf der alten
-Richtwertlogik beruhen. Deshalb verwendet 0.3.5.2 einen neu versionierten
-IndexedDB-Suchspeicher. Der Suchlauf beginnt beim ersten Start dieser Version
-einmalig neu; die persönliche Sammlung und alle Kaufpreise bleiben erhalten.
 
 ## Hotfix 0.3.5.1
 
@@ -73,7 +99,7 @@ Der Hotfix ersetzt diesen Bereich mobil durch ein zweispaltiges Raster mit
 zwei Zeilen, die Begründung wird auf eine Zeile begrenzt und die Footer-Metadaten
 werden kompakt zusammengefasst. Die Anzeigenbeschreibung bleibt ausgeblendet.
 
-Der Header zeigt auf Desktop und Mobilgerät **Projekt SNES · v0.3.5.2**.
+Der Header zeigt auf Desktop und Mobilgerät **Projekt SNES · v0.3.5.3**.
 
 ## GUI 0.3.5
 
@@ -139,9 +165,10 @@ Online-Richtwert:
 - **Rot:** ab 41 Prozent über dem Richtwert oder als Repro/Defekt/Gesuch unpassend
 - **Unklar:** Preis, Titelzuordnung oder Konvolutinhalt nicht belastbar bewertbar
 
-Ein unklarer **Angebotszustand** wird in 0.3.5.2 dennoch konservativ gegen den
+Ein unklarer **Angebotszustand** wird weiterhin konservativ gegen den
 Modul-Richtwert bewertet, wenn Spielzuordnung, Preis und ggf. Konvolutinhalt
-sonst ausreichend sicher sind.
+sonst ausreichend sicher sind. Reine Zubehörangebote werden bereits vor dieser
+Preisbewertung entfernt.
 
 Version 0.3.1 bereinigt routesichere Suchbegriffe, Version 0.3.2 speichert
 Suchstand und Angebote in IndexedDB und wiederholt vorübergehende Fehler,
@@ -162,8 +189,8 @@ Marktwert. Die Anwendung zeigt dort bewusst `–`.
 
 Die persönliche Sammlung sowie Suchfortschritt und gefundene Angebote werden
 ausschließlich im lokalen Speicher des Browsers abgelegt. Die Suchergebnisse
-liegen ab 0.3.5.2 im neu versionierten IndexedDB-Suchspeicher; die Sammlung liegt
-ab Version 0.3.4 im `localStorage`-Schema `snes-pal-sammlung-v2`.
+liegen ab 0.3.5.3 im erneut versionierten IndexedDB-Suchspeicher; die Sammlung
+liegt ab Version 0.3.4 im `localStorage`-Schema `snes-pal-sammlung-v2`.
 
 Der Katalog ist in `app/snes-games.json` enthalten. Der integrierte
 Ausgangsbestand aus der Excel-Datei ist in `app/initial-collection.ts`
@@ -181,13 +208,15 @@ npm run build:pages
 ```
 
 `npm test` prüft das Sammlungsmodell, Suchbewertung, Recovery, Sortierung,
-zustandsabhängige Richtwerte und die mobilen UI-Verträge. Der
-GitHub-Pages-Build validiert danach das tatsächlich erzeugte Pages-Artefakt auf
-Release-Identität, Excel-Bootstrap, 0.3.5.2-Preissemanik und responsive UI.
-GitHub Pages führt Test und Build bei jedem Push auf `main` erneut aus.
+zustandsabhängige Richtwerte, den Asterix-Spielanleitungs-Regressionsfall und die
+mobilen UI-Verträge. Der GitHub-Pages-Build validiert danach das tatsächlich
+erzeugte Pages-Artefakt auf Release-Identität, Excel-Bootstrap,
+0.3.5.3-Zubehörfilter, Preissemanik und responsive UI. GitHub Pages führt Test
+und Build bei jedem Push auf `main` erneut aus.
 
 ## Versionen
 
+- [`docs/VERSION-0.3.5.3.md`](docs/VERSION-0.3.5.3.md) – Zubehörfilter und strengere Zustandszuordnung
 - [`docs/VERSION-0.3.5.2.md`](docs/VERSION-0.3.5.2.md) – zustandsabhängiger Preisvergleich und konservativer Modul-Fallback
 - [`docs/VERSION-0.3.5.1.md`](docs/VERSION-0.3.5.1.md) – Mobile-Hotfix für kompakte Suchkarten und Aktionsbuttons
 - [`docs/VERSION-0.3.5.md`](docs/VERSION-0.3.5.md) – mobiles GUI-Rework und kompakte Suchkarten
