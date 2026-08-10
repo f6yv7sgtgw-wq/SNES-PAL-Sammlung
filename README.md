@@ -1,4 +1,4 @@
-# SNES PAL Sammlung – Version 0.3.4
+# Projekt SNES – Version 0.3.5
 
 Ein für iPhone und Desktop optimierter Sammlungsmanager für europäische
 Super-Nintendo-Spiele.
@@ -23,13 +23,36 @@ Super-Nintendo-Spiele.
 - deutschlandweite Suche mit Versand; reine Abholangebote werden entfernt
 - sequenzieller Vollsuchlauf mit sanftem Stopp und lokal gespeichertem Fortsetzen
 - automatische Wiederholung vorübergehender Parser- und Netzwerkfehler
-- Prüfung von Titel und Beschreibungsanriss auf Repros, Defekte und Konvolute
+- Prüfung von Titel und Beschreibungsdaten auf Repros, Defekte und Konvolute
 - Konvolut-Richtwert als Summe aller erkannten Spiele aus der Preisbibliothek
 - vierstufige Preisampel nach prozentualer Abweichung inklusive erkannter Versandkosten
 - feste Ergebnisgruppen Grün, Gelb, Orange, Rot und Unklar mit frei wählbarer
   Sortierung innerhalb jeder Farbe
+- mobile, gegen horizontale Überläufe abgesicherte Karten und Formulare
+- kompakte Suchergebnis-Karten nach dem GenericParser-1.5-Muster mit kleinen
+  quadratischen Vorschaubildern und ohne sichtbaren Anzeigentext
 - JSON-Datensicherung mit Export und Import
 - dunkle, touchfreundliche Oberfläche
+
+## GUI 0.3.5
+
+Version 0.3.5 überarbeitet die mobile Darstellung, ohne die fachliche
+Sammlungs- oder Suchlogik zu ändern.
+
+Alle relevanten Grid- und Flex-Bereiche dürfen auf kleinen Displays schrumpfen,
+statt die Seitenbreite zu vergrößern. Große Zahlen verwenden responsive
+Schriftgrößen. Im finanziellen Überblick werden Beschriftung und Betrag auf
+schmalen Telefonen untereinander dargestellt, damit auch längere Eurobeträge
+innerhalb ihrer Karte bleiben. Dieselben Regeln gelten für Statistik-,
+Zustands-, Richtwert-, Katalog-, Such-, Preisvergleichs- und Dialogkarten.
+
+Die Suchergebnis-Karten orientieren sich an GenericParser 1.5.0: kleines
+quadratisches Bild und Text bleiben nebeneinander, die Karten sind deutlich
+kompakter und die Anzeigenbeschreibung wird nicht mehr sichtbar dargestellt.
+Titel, Preis, Ampel, Zustand, Preisvergleich, erkannte Spiele und Aktionen
+bleiben erhalten.
+
+Der Header zeigt auf Desktop und Mobilgerät **Projekt SNES · v0.3.5**.
 
 ## Sammlungsmodell 0.3.4
 
@@ -114,13 +137,15 @@ npm run lint
 npm run build:pages
 ```
 
-`npm test` prüft zusätzlich das Sammlungsmodell: Migration alter Zustände,
-CIB-Bewertung, Komponenten-Summen, Mengen und Konsistenz des integrierten
-Excel-Bestands. GitHub Pages führt Test und Build bei jedem Push auf `main`
+`npm test` prüft das Sammlungsmodell, Suchbewertung, Recovery, Sortierung und ab
+0.3.5 zusätzlich den mobilen UI-Vertrag. Der GitHub-Pages-Build validiert danach
+das tatsächlich erzeugte Pages-Artefakt auf Release-Identität, Excel-Bootstrap
+und responsive UI. GitHub Pages führt Test und Build bei jedem Push auf `main`
 erneut aus.
 
 ## Versionen
 
+- [`docs/VERSION-0.3.5.md`](docs/VERSION-0.3.5.md) – mobiles GUI-Rework und kompakte Suchkarten
 - [`docs/VERSION-0.3.4.md`](docs/VERSION-0.3.4.md) – Komponentenmodell, Excel-Ausgangsbestand und Richtwertlogik
 - [`docs/VERSION-0.3.3.md`](docs/VERSION-0.3.3.md) – feste Farbgruppen und Sortierung innerhalb der Gruppen
 - [`docs/VERSION-0.3.2.md`](docs/VERSION-0.3.2.md) – erweiterter Speicher und automatische Wiederholung
