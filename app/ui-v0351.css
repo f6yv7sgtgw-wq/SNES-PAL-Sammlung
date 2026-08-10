@@ -1,0 +1,172 @@
+/* Project SNES 0.3.5.1 – compact mobile search-card hotfix. */
+
+.version-badge::after {
+  content: "v0.3.5.1";
+}
+
+@media (max-width: 520px) {
+  .search-results-list {
+    gap: 8px;
+  }
+
+  .search-result {
+    grid-template-columns: 64px minmax(0, 1fr);
+    gap: 8px;
+    padding: 8px;
+    border-radius: 13px;
+  }
+
+  .offer-image {
+    width: 64px;
+    height: 64px;
+    border-radius: 9px;
+  }
+
+  .offer-topline {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 7px;
+  }
+
+  .offer-topline > div {
+    min-width: 0;
+  }
+
+  .offer-badges {
+    gap: 3px;
+  }
+
+  .offer-badges > span,
+  .offer-games > span {
+    padding: 4px 7px;
+    font-size: 0.56rem;
+  }
+
+  .traffic-pill {
+    gap: 4px;
+  }
+
+  .offer-topline h4 {
+    margin-top: 5px;
+    font-size: 0.79rem;
+    line-height: 1.22;
+    -webkit-line-clamp: 2;
+  }
+
+  .offer-price {
+    margin-top: 1px;
+    font-size: 0.78rem;
+    line-height: 1.2;
+  }
+
+  .offer-comparison {
+    margin-top: 7px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .offer-comparison > div,
+  .offer-comparison > div:last-child {
+    grid-column: auto;
+    padding: 6px 5px;
+    border-radius: 8px;
+  }
+
+  .offer-comparison span {
+    font-size: 0.51rem;
+  }
+
+  .offer-comparison strong {
+    margin-top: 2px;
+    font-size: 0.63rem;
+    line-height: 1.15;
+  }
+
+  .offer-reason {
+    margin-top: 6px;
+    padding: 6px 8px;
+    font-size: 0.59rem;
+    line-height: 1.3;
+    -webkit-line-clamp: 1;
+  }
+
+  .offer-games {
+    margin-top: 6px;
+  }
+
+  .offer-description {
+    display: none !important;
+  }
+
+  .offer-footer {
+    width: 100%;
+    margin-top: 6px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .offer-footer > div:first-child {
+    min-width: 0;
+    display: block;
+    overflow: hidden;
+    font-size: 0.56rem;
+    line-height: 1.3;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .offer-footer > div:first-child span {
+    display: inline;
+  }
+
+  .offer-footer > div:first-child span + span::before {
+    content: " · ";
+  }
+
+  .offer-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    flex-direction: row;
+  }
+
+  .offer-actions > * {
+    width: 100%;
+    min-height: 36px;
+    height: 36px;
+    padding: 6px 8px;
+    flex: none;
+    border-radius: 9px;
+    font-size: 0.64rem;
+    line-height: 1;
+  }
+
+  .offer-actions > *:only-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 380px) {
+  .search-result {
+    grid-template-columns: 58px minmax(0, 1fr);
+    gap: 7px;
+    padding: 7px;
+  }
+
+  .offer-image {
+    width: 58px;
+    height: 58px;
+  }
+
+  .offer-comparison {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .offer-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
