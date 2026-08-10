@@ -1,4 +1,10 @@
 export type SearchPriceKey = "module" | "cib" | "new" | "box" | "manual";
+export type OfferConditionKey =
+  | "module"
+  | "module_manual"
+  | "module_box"
+  | "cib"
+  | "new";
 
 export type SearchGame = {
   id: string;
@@ -46,7 +52,7 @@ export type EvaluatedOffer = {
   comparisonIncludesShipping: boolean;
   shippingStatus: ShippingStatus;
   shippingLabel: string;
-  condition: SearchPriceKey;
+  condition: OfferConditionKey;
   conditionLabel: string;
   conditionCertain: boolean;
   referenceCents: number | null;
@@ -130,7 +136,7 @@ const ROMAN_NUMERALS: Record<string, string> = {
 export function buildParserQuery(title: string) {
   const safeTitle = title
     .normalize("NFKC")
-    .replace(/[\\/\\\\]+/g, " ")
+    .replace(/[\/\\]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
   return `SNES ${safeTitle}`.slice(0, 120);
@@ -245,27 +251,65 @@ function declaredBundleCount(text: string) {
 }
 
 function inferCondition(text: string): {
-  key: SearchPriceKey;
+  key: OfferConditionKey;
   label: string;
   certain: boolean;
 } {
-  if (/\b(versiegelt|sealed|ungeöffnet|ungeoeffnet|neu in folie|noch in folie)\b/i.test(text)) {
+  const normalized = normalizeListingText(text);
+  const sealed = /\b(versiegelt|sealed|ungeoffnet|neu in folie|noch in folie|factory sealed)\b/.test(
+    normalized,
+  );
+  if (sealed) {
     return { key: "new", label: "Neu / Sealed", certain: true };
   }
-  if (
-    /\b(cib|complete in box|komplett mit (?:ovp|box|verpackung)|ovp (?:mit|und) anleitung|mit ovp und anleitung)\b/i.test(
-      text,
-    )
-  ) {
+
+  const explicitCib = /\b(cib|complete in box|komplett in ovp|komplett mit ovp|komplett mit box|komplett mit verpackung)\b/.test(
+    normalized,
+  );
+  const boxSignal = /\b(ovp|originalverpackung|box|karton|verpackung)\b/.test(normalized);
+  const manualSignal = /\b(anleitung|manual|handbuch|spielanleitung)\b/.test(normalized);
+  const moduleSignal = /\b(modul|module|cartridge|lose|loose)\b/.test(normalized);
+  const noManual = /\b(ohne anleitung|ohne manual|anleitung fehlt|manual fehlt)\b/.test(normalized);
+  const noBox = /\b(ohne ovp|ohne box|ohne verpackung|ovp fehlt|box fehlt)\b/.test(normalized);
+
+  if (explicitCib || (boxSignal && manualSignal && !noManual && !noBox)) {
     return { key: "cib", label: "OVP / CIB", certain: true };
   }
-  if (/\b(ovp|originalverpackung|mit box|mit verpackung)\b/i.test(text)) {
-    return { key: "cib", label: "OVP / CIB", certain: false };
+  if (boxSignal && noManual) {
+    return { key: "module_box", label: "Modul + Box", certain: true };
   }
-  if (/\b(modul|module|cartridge|lose|loose)\b/i.test(text)) {
+  if (moduleSignal && boxSignal && !manualSignal && !noBox) {
+    return { key: "module_box", label: "Modul + Box", certain: true };
+  }
+  if (manualSignal && !boxSignal && !noManual) {
+    return { key: "module_manual", label: "Modul + Anleitung", certain: true };
+  }
+  if (moduleSignal && !boxSignal && !manualSignal) {
     return { key: "module", label: "Modul", certain: true };
   }
-  return { key: "module", label: "Modul angenommen", certain: false };
+
+  // Conservative fallback requested for 0.3.5.2: an unclear condition is
+  // always compared with the module guide value, never CIB or sealed.
+  return {
+    key: "module",
+    label: "Unklar · Modul-Richtwert",
+    certain: false,
+  };
+}
+
+export function conditionReferenceForGame(
+  game: SearchGame,
+  condition: OfferConditionKey,
+): number | null {
+  if (condition === "new") return game.prices.new;
+  if (condition === "cib") return game.prices.cib;
+  if (condition === "module") return game.prices.module;
+  if (condition === "module_manual") {
+    if (game.prices.module === null || game.prices.manual === null) return null;
+    return game.prices.module + game.prices.manual;
+  }
+  if (game.prices.module === null || game.prices.box === null) return null;
+  return game.prices.module + game.prices.box;
 }
 
 function inferShipping(text: string): {
@@ -383,7 +427,7 @@ export function reclassifyEvaluatedOffer(offer: EvaluatedOffer): EvaluatedOffer 
       notes.push("Vergleich vor offenen Versandkosten");
     }
     if (!offer.conditionCertain) {
-      notes.push("Modul-Richtwert konservativ angenommen");
+      notes.push("Zustand unklar · Modul-Richtwert verwendet");
     }
     reason = notes.join(" · ");
   }
@@ -446,7 +490,8 @@ export function evaluateKleinanzeigenListing(
     return { kind: "ignored", reason: "pickup-only" };
   }
 
-  const condition = inferCondition(text);
+  const conditionText = `${text} ${String(listing.result_info?.condition || "")}`.trim();
+  const condition = inferCondition(conditionText);
   const isBundle = bundleSignal || matchedGames.length > 1;
   const descriptionLooksCut = /(?:\.\.\.|…)$/.test(description);
   const declaredCount = declaredBundleCount(text);
@@ -459,7 +504,9 @@ export function evaluateKleinanzeigenListing(
       matchedGames.length > 1 &&
       !descriptionLooksCut &&
       (declaredCount === null || matchedGames.length >= declaredCount));
-  const references = matchedGames.map((game) => game.prices[condition.key]);
+  const references = matchedGames.map((game) =>
+    conditionReferenceForGame(game, condition.key),
+  );
   const referenceCents = references.every((value) => value !== null)
     ? references.reduce<number>((sum, value) => sum + (value ?? 0), 0)
     : null;
