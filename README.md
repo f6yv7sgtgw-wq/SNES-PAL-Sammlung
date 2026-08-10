@@ -1,4 +1,4 @@
-# Projekt SNES – Version 0.3.5
+# Projekt SNES – Version 0.3.5.1
 
 Ein für iPhone und Desktop optimierter Sammlungsmanager für europäische
 Super-Nintendo-Spiele.
@@ -31,8 +31,24 @@ Super-Nintendo-Spiele.
 - mobile, gegen horizontale Überläufe abgesicherte Karten und Formulare
 - kompakte Suchergebnis-Karten nach dem GenericParser-1.5-Muster mit kleinen
   quadratischen Vorschaubildern und ohne sichtbaren Anzeigentext
+- kompakte 36-Pixel-Aktionsbuttons in Suchkarten auf Mobilgeräten
 - JSON-Datensicherung mit Export und Import
 - dunkle, touchfreundliche Oberfläche
+
+## Hotfix 0.3.5.1
+
+0.3.5.1 korrigiert den im mobilen Screenshot sichtbaren übergroßen
+Aktionsbereich der Suchkarten. Auf Telefonen wirkte noch eine ältere vertikale
+Flex-Regel auf einen 120-Pixel-Flex-Basiswert; dadurch wurden **Zur Sammlung**
+und **Anzeige öffnen** unnötig hoch.
+
+Der Hotfix ersetzt diesen Bereich mobil durch ein zweispaltiges Raster mit
+36-Pixel-Buttons. Gleichzeitig wird das Vorschaubild auf 64 × 64 Pixel reduziert
+(58 × 58 auf sehr schmalen Geräten), der Preisvergleich zeigt sechs Werte in nur
+zwei Zeilen, die Begründung wird auf eine Zeile begrenzt und die Footer-Metadaten
+werden kompakt zusammengefasst. Die Anzeigenbeschreibung bleibt ausgeblendet.
+
+Der Header zeigt auf Desktop und Mobilgerät **Projekt SNES · v0.3.5.1**.
 
 ## GUI 0.3.5
 
@@ -51,8 +67,6 @@ quadratisches Bild und Text bleiben nebeneinander, die Karten sind deutlich
 kompakter und die Anzeigenbeschreibung wird nicht mehr sichtbar dargestellt.
 Titel, Preis, Ampel, Zustand, Preisvergleich, erkannte Spiele und Aktionen
 bleiben erhalten.
-
-Der Header zeigt auf Desktop und Mobilgerät **Projekt SNES · v0.3.5**.
 
 ## Sammlungsmodell 0.3.4
 
@@ -138,13 +152,15 @@ npm run build:pages
 ```
 
 `npm test` prüft das Sammlungsmodell, Suchbewertung, Recovery, Sortierung und ab
-0.3.5 zusätzlich den mobilen UI-Vertrag. Der GitHub-Pages-Build validiert danach
-das tatsächlich erzeugte Pages-Artefakt auf Release-Identität, Excel-Bootstrap
-und responsive UI. GitHub Pages führt Test und Build bei jedem Push auf `main`
-erneut aus.
+0.3.5 zusätzlich den mobilen UI-Vertrag. 0.3.5.1 ergänzt einen Regressionstest
+für die mobilen Button-Höhen und die dreispaltige Vergleichsdarstellung. Der
+GitHub-Pages-Build validiert danach das tatsächlich erzeugte Pages-Artefakt auf
+Release-Identität, Excel-Bootstrap und die aktiven Hotfix-Regeln. GitHub Pages
+führt Test und Build bei jedem Push auf `main` erneut aus.
 
 ## Versionen
 
+- [`docs/VERSION-0.3.5.1.md`](docs/VERSION-0.3.5.1.md) – Mobile-Hotfix für kompakte Suchkarten und Aktionsbuttons
 - [`docs/VERSION-0.3.5.md`](docs/VERSION-0.3.5.md) – mobiles GUI-Rework und kompakte Suchkarten
 - [`docs/VERSION-0.3.4.md`](docs/VERSION-0.3.4.md) – Komponentenmodell, Excel-Ausgangsbestand und Richtwertlogik
 - [`docs/VERSION-0.3.3.md`](docs/VERSION-0.3.3.md) – feste Farbgruppen und Sortierung innerhalb der Gruppen
