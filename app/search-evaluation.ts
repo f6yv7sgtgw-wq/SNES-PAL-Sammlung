@@ -104,7 +104,7 @@ const HARD_REJECT =
   /\b(repro(?:duction)?|nachbau|bootleg|fake|romhack|rom[ -]?hack|defekt|kaputt|bastler|ungetestet|ersatzteil)\b/i;
 const WANTED = /^(?:suche|gesucht|ankauf|kaufe)\b|\b(?:suche nach|wer verkauft)\b/i;
 const ONLY_ACCESSORY =
-  /\b(?:nur|only)\s+(?:ovp|box|karton|verpackung|anleitung|manual|hülle)|\bleerverpackung\b/i;
+  /\b(?:nur|only)\s+(?:ovp|box|karton|verpackung|anleitung|manual|hülle)|\b(?:leerbox|leerverpackung|empty box|box only|ovp only)\b/i;
 const PICKUP_ONLY =
   /\b(?:nur|ausschließlich|ausschliesslich)\s+(?:zur\s+)?abholung\b|\bkein(?:e[rs]?)?\s+versand\b|\bnur\s+selbstabholer\b/i;
 const SHIPPING_SIGNAL =
@@ -250,12 +250,81 @@ function declaredBundleCount(text: string) {
   return word ? words[word[1]] : null;
 }
 
+function contentSignals(text: string) {
+  const normalized = normalizeListingText(text);
+  const manualSignal = /\b(anleitung|manual|handbuch|spielanleitung)\b/.test(normalized);
+  const boxSignal = /\b(ovp|originalverpackung|box|karton|verpackung)\b/.test(normalized);
+  const moduleSignal = /\b(modul|module|cartridge|lose|loose)\b/.test(normalized);
+  const gameSignal = /\b(spiel|game)\b/.test(normalized);
+  const noManual = /\b(ohne anleitung|ohne manual|anleitung fehlt|manual fehlt)\b/.test(normalized);
+  const noBox = /\b(ohne ovp|ohne box|ohne verpackung|ovp fehlt|box fehlt)\b/.test(normalized);
+  const noGameItem =
+    /\b(?:ohne|kein(?:e[rs]?)?|nicht mit|nicht dabei|fehlt)\s+(?:das\s+)?(?:spiel|modul|module|cartridge)\b|\b(?:spiel|modul|module|cartridge)\s+(?:nicht dabei|fehlt|nicht enthalten)\b/.test(
+      normalized,
+    );
+  const explicitManualOnly =
+    /\b(?:nur|only)\s+(?:die\s+)?(?:spielanleitung|anleitung|manual|handbuch)\b|\b(?:spielanleitung|anleitung|manual|handbuch)\s+(?:only|einzeln)\b/.test(
+      normalized,
+    );
+  const manualForGame =
+    /\b(?:spielanleitung|anleitung|manual|handbuch)\b(?:\s+\w+){0,4}\s+\b(?:fur|fuer|zum|zu|vom|for)\b(?:\s+\w+){0,4}\s+\b(?:spiel|game)\b/.test(
+      normalized,
+    );
+  const explicitBoxOnly =
+    /\b(leerbox|leerverpackung|empty box|box only|ovp only)\b|\b(?:nur|only)\s+(?:die\s+)?(?:ovp|box|karton|verpackung)\b/.test(
+      normalized,
+    );
+
+  return {
+    normalized,
+    manualSignal,
+    boxSignal,
+    moduleSignal,
+    gameSignal,
+    gameItemSignal: (moduleSignal || gameSignal) && !noGameItem,
+    noManual,
+    noBox,
+    noGameItem,
+    explicitManualOnly,
+    manualForGame,
+    explicitBoxOnly,
+  };
+}
+
+function accessoryOnlyReason(text: string) {
+  const signals = contentSignals(text);
+
+  if (signals.explicitBoxOnly || (signals.boxSignal && signals.noGameItem)) {
+    return "Nur Verpackung ohne Spiel/Modul";
+  }
+
+  if (
+    signals.explicitManualOnly ||
+    signals.manualForGame ||
+    (signals.manualSignal &&
+      !signals.boxSignal &&
+      !signals.gameItemSignal)
+  ) {
+    return "Nur Anleitung ohne Spiel/Modul";
+  }
+
+  if (
+    signals.noGameItem &&
+    (signals.manualSignal || signals.boxSignal)
+  ) {
+    return "Nur Zubehör ohne Spiel/Modul";
+  }
+
+  return null;
+}
+
 function inferCondition(text: string): {
   key: OfferConditionKey;
   label: string;
   certain: boolean;
 } {
-  const normalized = normalizeListingText(text);
+  const signals = contentSignals(text);
+  const { normalized } = signals;
   const sealed = /\b(versiegelt|sealed|ungeoffnet|neu in folie|noch in folie|factory sealed)\b/.test(
     normalized,
   );
@@ -266,30 +335,57 @@ function inferCondition(text: string): {
   const explicitCib = /\b(cib|complete in box|komplett in ovp|komplett mit ovp|komplett mit box|komplett mit verpackung)\b/.test(
     normalized,
   );
-  const boxSignal = /\b(ovp|originalverpackung|box|karton|verpackung)\b/.test(normalized);
-  const manualSignal = /\b(anleitung|manual|handbuch|spielanleitung)\b/.test(normalized);
-  const moduleSignal = /\b(modul|module|cartridge|lose|loose)\b/.test(normalized);
-  const noManual = /\b(ohne anleitung|ohne manual|anleitung fehlt|manual fehlt)\b/.test(normalized);
-  const noBox = /\b(ohne ovp|ohne box|ohne verpackung|ovp fehlt|box fehlt)\b/.test(normalized);
 
-  if (explicitCib || (boxSignal && manualSignal && !noManual && !noBox)) {
+  if (explicitCib) {
     return { key: "cib", label: "OVP / CIB", certain: true };
   }
-  if (boxSignal && noManual) {
+  if (
+    signals.gameItemSignal &&
+    signals.boxSignal &&
+    signals.manualSignal &&
+    !signals.noManual &&
+    !signals.noBox &&
+    !signals.noGameItem
+  ) {
+    return { key: "cib", label: "OVP / CIB", certain: true };
+  }
+  if (
+    signals.gameItemSignal &&
+    signals.boxSignal &&
+    signals.noManual &&
+    !signals.noGameItem
+  ) {
     return { key: "module_box", label: "Modul + Box", certain: true };
   }
-  if (moduleSignal && boxSignal && !manualSignal && !noBox) {
+  if (
+    signals.moduleSignal &&
+    signals.boxSignal &&
+    !signals.manualSignal &&
+    !signals.noBox &&
+    !signals.noGameItem
+  ) {
     return { key: "module_box", label: "Modul + Box", certain: true };
   }
-  if (manualSignal && !boxSignal && !noManual) {
+  if (
+    signals.gameItemSignal &&
+    signals.manualSignal &&
+    !signals.boxSignal &&
+    !signals.noManual &&
+    !signals.noGameItem
+  ) {
     return { key: "module_manual", label: "Modul + Anleitung", certain: true };
   }
-  if (moduleSignal && !boxSignal && !manualSignal) {
+  if (
+    signals.moduleSignal &&
+    !signals.boxSignal &&
+    !signals.manualSignal &&
+    !signals.noGameItem
+  ) {
     return { key: "module", label: "Modul", certain: true };
   }
 
-  // Conservative fallback requested for 0.3.5.2: an unclear condition is
-  // always compared with the module guide value, never CIB or sealed.
+  // Conservative fallback: an unclear condition is always compared with the
+  // module guide value, never CIB or sealed.
   return {
     key: "module",
     label: "Unklar · Modul-Richtwert",
@@ -485,12 +581,16 @@ export function evaluateKleinanzeigenListing(
   }
   if (!matchedGames.length && bundleSignal) matchedGames = [currentGame];
 
+  const conditionText = `${text} ${String(listing.result_info?.condition || "")}`.trim();
+  if (accessoryOnlyReason(conditionText)) {
+    return { kind: "ignored", reason: "irrelevant" };
+  }
+
   const shipping = inferShipping(text);
   if (shipping.status === "pickup-only") {
     return { kind: "ignored", reason: "pickup-only" };
   }
 
-  const conditionText = `${text} ${String(listing.result_info?.condition || "")}`.trim();
   const condition = inferCondition(conditionText);
   const isBundle = bundleSignal || matchedGames.length > 1;
   const descriptionLooksCut = /(?:\.\.\.|…)$/.test(description);
