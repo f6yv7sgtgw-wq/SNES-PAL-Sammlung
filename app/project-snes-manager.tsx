@@ -50,5 +50,12 @@ export default function ProjectSnesManager({
     if (badge) badge.textContent = "v0.3.5";
   }, [games]);
 
-  return <CollectionManager games={games} priceMeta={priceMeta} />;
+  return (
+    <>
+      <span hidden data-project-version="0.3.5">
+        v0.3.5
+      </span>
+      <CollectionManager games={games} priceMeta={priceMeta} />
+    </>
+  );
 }
