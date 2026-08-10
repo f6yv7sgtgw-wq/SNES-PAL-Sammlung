@@ -1,0 +1,536 @@
+/* Project SNES 0.3.5 – mobile overflow hardening and compact search cards. */
+
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Every flexible/grid card child must be allowed to shrink on narrow screens. */
+.page-shell,
+.panel,
+.stat-card,
+.section-heading,
+.section-heading > *,
+.progress-layout,
+.condition-summary,
+.condition-summary > div,
+.value-list,
+.value-list > div,
+.toolbar,
+.toolbar > *,
+.catalog-toolbar,
+.catalog-controls,
+.catalog-controls > *,
+.game-card,
+.game-card > *,
+.owned-summary,
+.owned-summary > *,
+.price-grid,
+.price-cell,
+.reference-row,
+.reference-row > *,
+.search-heading,
+.search-heading > *,
+.search-control-grid,
+.search-run-card,
+.search-run-topline,
+.search-run-topline > *,
+.search-storage-status,
+.search-scope,
+.traffic-legend,
+.traffic-legend > div,
+.search-metrics,
+.search-metrics > div,
+.search-results-heading,
+.search-results-heading > *,
+.search-result-tools,
+.result-sort-controls,
+.result-sort-controls > *,
+.search-filter-row,
+.traffic-filters,
+.search-results-list,
+.search-result,
+.offer-body,
+.offer-topline,
+.offer-topline > *,
+.offer-badges,
+.offer-comparison,
+.offer-comparison > div,
+.offer-games,
+.offer-footer,
+.offer-footer > *,
+.offer-actions,
+.modal,
+.modal-heading,
+.modal-heading > *,
+.editor-form,
+.form-columns,
+.picker-result,
+.picker-result > * {
+  min-width: 0;
+}
+
+.stat-card,
+.panel,
+.search-run-card,
+.traffic-legend,
+.search-result,
+.game-card,
+.value-list > div,
+.condition-summary > div,
+.reference-row {
+  max-width: 100%;
+}
+
+/* Header identity is visible and versioned on desktop and phone. */
+.title-row {
+  min-width: 0;
+}
+
+.title-row h1 {
+  max-width: none !important;
+  font-size: 0 !important;
+}
+
+.title-row h1::after {
+  content: "Projekt SNES";
+  font-size: clamp(1.08rem, 2vw, 1.45rem);
+  font-weight: 740;
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+}
+
+.version-badge {
+  display: inline-flex !important;
+  flex: 0 0 auto;
+  padding: 4px 8px !important;
+  font-size: 0 !important;
+}
+
+.version-badge::after {
+  content: "v0.3.5";
+  font-size: 0.68rem;
+  font-weight: 760;
+  letter-spacing: 0.02em;
+}
+
+/* Numbers never force their containing cards wider than the viewport. */
+.stat-card strong,
+.condition-summary strong,
+.value-list strong,
+.reference-row strong,
+.search-percent,
+.search-metrics strong,
+.offer-price,
+.offer-comparison strong,
+.owned-summary strong,
+.price-cell strong {
+  max-width: 100%;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-card strong {
+  overflow-wrap: anywhere;
+  font-size: clamp(1.45rem, 6.6vw, 2.25rem);
+}
+
+.condition-summary > div {
+  align-items: center;
+}
+
+.condition-summary span,
+.value-list span,
+.value-list small,
+.reference-row span,
+.search-metrics span,
+.offer-comparison span,
+.owned-summary span,
+.price-cell span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.value-list > div {
+  grid-template-columns: minmax(0, 1fr) minmax(0, max-content);
+}
+
+.value-list strong {
+  justify-self: end;
+  color: var(--accent-light);
+  font-size: clamp(0.94rem, 4.2vw, 1.12rem);
+  line-height: 1.15;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.reference-row {
+  flex-wrap: wrap;
+}
+
+.reference-row strong {
+  margin-left: auto;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.badge,
+.worker-badge {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.section-heading,
+.search-results-heading,
+.search-run-topline,
+.offer-topline,
+.offer-footer {
+  flex-wrap: wrap;
+}
+
+.search-run-topline > div,
+.offer-topline > div {
+  min-width: 0;
+  flex: 1 1 180px;
+}
+
+.search-run-topline strong,
+.offer-topline h4,
+.game-card h3,
+.picker-result strong,
+.picker-result small {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.search-actions,
+.offer-actions {
+  flex-wrap: wrap;
+}
+
+.search-actions > *,
+.offer-actions > * {
+  max-width: 100%;
+}
+
+/* GenericParser 1.5 pattern: dense cards, square thumbnail, text beside image. */
+.search-results-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(430px, 100%), 1fr));
+  gap: 10px;
+  align-items: start;
+}
+
+.search-result {
+  padding: 10px;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 11px;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.offer-image {
+  width: 92px;
+  height: 92px;
+  aspect-ratio: 1;
+  border-radius: 10px;
+}
+
+.offer-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.offer-body {
+  width: 100%;
+}
+
+.offer-topline {
+  gap: 8px;
+}
+
+.offer-topline h4 {
+  margin-top: 7px;
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 0.86rem;
+  line-height: 1.25;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.offer-price {
+  flex: 0 0 auto;
+  font-size: 0.86rem;
+  white-space: nowrap;
+}
+
+.offer-badges {
+  gap: 4px;
+}
+
+.offer-badges > span,
+.offer-games > span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.offer-comparison {
+  margin-top: 9px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.offer-comparison > div {
+  padding: 7px 6px;
+}
+
+.offer-comparison span {
+  font-size: 0.55rem;
+  line-height: 1.2;
+}
+
+.offer-comparison strong {
+  margin-top: 2px;
+  overflow-wrap: anywhere;
+  font-size: 0.67rem;
+  line-height: 1.2;
+}
+
+/* Listing description is intentionally not shown, matching GenericParser 1.5. */
+.offer-description {
+  display: none !important;
+}
+
+.offer-reason {
+  margin: 8px 0 0;
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 0.64rem;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.offer-games {
+  margin-top: 7px;
+  gap: 4px;
+}
+
+.offer-games > span {
+  font-size: 0.58rem;
+}
+
+.offer-footer {
+  margin-top: 8px;
+  gap: 7px;
+}
+
+.offer-footer > div:first-child {
+  overflow-wrap: anywhere;
+  font-size: 0.6rem;
+}
+
+.offer-actions > * {
+  min-height: 36px;
+  padding: 7px 10px;
+  font-size: 0.65rem;
+}
+
+/* General form/card hardening. */
+input,
+select,
+textarea,
+button,
+a {
+  min-width: 0;
+}
+
+input,
+select,
+textarea {
+  max-width: 100%;
+}
+
+.game-meta,
+.catalog-status-line,
+.game-note,
+.source-note,
+.search-run-copy,
+.search-storage-status,
+.search-notice,
+.search-error,
+.legend-note,
+.sort-order-note,
+.search-audit-note {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 720px) {
+  .title-row h1::after {
+    font-size: 1rem;
+  }
+
+  .version-badge {
+    padding: 3px 6px !important;
+  }
+
+  .version-badge::after {
+    font-size: 0.62rem;
+  }
+
+  .section-heading,
+  .search-heading {
+    gap: 10px;
+  }
+
+  .worker-badge {
+    max-width: 100%;
+  }
+
+  .search-result {
+    grid-template-columns: 78px minmax(0, 1fr);
+    gap: 9px;
+    padding: 9px;
+  }
+
+  .offer-image {
+    width: 78px;
+    height: 78px;
+  }
+
+  .offer-comparison {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .stat-card strong {
+    font-size: clamp(1.35rem, 7vw, 1.75rem);
+  }
+
+  .condition-summary > div {
+    padding: 10px;
+  }
+
+  .condition-summary span {
+    font-size: 0.7rem;
+  }
+
+  .condition-summary strong {
+    flex: 0 0 auto;
+    font-size: 1rem;
+  }
+
+  .result-sort-controls {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+
+@media (max-width: 520px) {
+  /* Financial values stack below their label instead of escaping the card. */
+  .value-list > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .value-list strong {
+    grid-column: 1;
+    justify-self: start;
+    font-size: clamp(1rem, 5vw, 1.1rem);
+    text-align: left;
+  }
+
+  .value-list small {
+    grid-column: 1;
+  }
+
+  .reference-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .reference-row strong {
+    margin-left: 0;
+    text-align: left;
+  }
+
+  .search-run-topline {
+    align-items: flex-start;
+  }
+
+  .search-percent {
+    flex: 0 0 auto;
+    font-size: 0.8rem;
+  }
+
+  .result-sort-controls {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .result-sort-direction {
+    width: 100%;
+  }
+
+  .search-result {
+    grid-template-columns: 70px minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .offer-image {
+    width: 70px;
+    height: 70px;
+  }
+
+  .offer-comparison {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .offer-topline h4 {
+    font-size: 0.82rem;
+  }
+
+  .offer-price {
+    font-size: 0.8rem;
+  }
+
+  .offer-footer,
+  .offer-actions {
+    width: 100%;
+  }
+
+  .offer-actions > * {
+    flex: 1 1 120px;
+  }
+
+  .modal-heading {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 380px) {
+  .stats-grid,
+  .condition-summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .search-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .catalog-controls {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .search-result {
+    grid-template-columns: 64px minmax(0, 1fr);
+  }
+
+  .offer-image {
+    width: 64px;
+    height: 64px;
+  }
+}
