@@ -1,6 +1,6 @@
 {
   "product": "Projekt SNES",
-  "version": "0.3.5.2",
+  "version": "0.3.5.3",
   "release_date": "2026-08-10",
   "catalog_games": 530,
   "cover_images": 529,
@@ -22,16 +22,23 @@
   },
   "search_condition_pricing": {
     "module": "module guide value",
-    "module_manual": "module plus manual guide values",
-    "module_box": "module plus box guide values",
+    "module_manual": "module plus manual guide values, only with an actual module/game-item signal",
+    "module_box": "module plus box guide values, only with an actual module/game-item signal",
     "cib": "dedicated CIB guide value",
     "sealed": "new/sealed guide value",
     "unclear": "module guide value as conservative fallback",
-    "ovp_without_manual": "module plus box",
+    "ovp_without_manual": "module plus box only when the game/module itself is evidenced; otherwise module fallback",
     "ovp_only_ambiguous": "module guide value as conservative fallback"
   },
-  "storage": "indexeddb-search-v0352; localstorage-collection-v2",
-  "search_cache_reset": "0.3.5.2 starts a new IndexedDB search cache because stored offers from older versions may contain incorrect reference semantics",
+  "search_accessory_filter": {
+    "manual_only": "discard",
+    "spielanleitung_only": "discard",
+    "box_only": "discard",
+    "empty_box": "discard",
+    "packaging_without_game_or_module": "discard"
+  },
+  "storage": "indexeddb-search-v0353; localstorage-collection-v2",
+  "search_cache_reset": "0.3.5.3 starts a new IndexedDB search cache because older stored results may contain accessory-only or misclassified condition results",
   "collection_schema": {
     "version": 2,
     "components": ["module", "box", "manual"],
