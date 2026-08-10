@@ -31,8 +31,8 @@ test("renders development preview metadata", async () => {
   );
   const html = await response.text();
   assert.match(html, developmentPreviewMeta);
-  assert.match(html, /data-project-version="0\.3\.5"/);
-  assert.match(html, /v0\.3\.5/);
+  assert.match(html, /data-project-version="0\.3\.5\.1"/);
+  assert.match(html, /v0\.3\.5\.1/);
   assert.match(html, /Fehlende PAL-Spiele suchen/);
   assert.match(html, /Ausschließlich Kleinanzeigen/);
   assert.match(html, /Innerhalb jeder Farbe sortieren nach/);
