@@ -9,6 +9,7 @@ import "../app/ui-v035.css";
 import "../app/ui-v0351.css";
 import "../app/ui-v0352.css";
 import "../app/ui-v0353.css";
+import "../app/ui-v100.css";
 
 const baseUrl = import.meta.env.BASE_URL;
 const games = (catalog.games as Game[]).map((game) => ({

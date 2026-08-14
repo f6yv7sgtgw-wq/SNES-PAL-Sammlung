@@ -1,0 +1,175 @@
+/* SNES Collect 1.0.0 – PWA-Politur und verfeinerte Oberfläche.
+   Additive Schicht über ui-v035…ui-v0353: Branding, Glättung, Standalone-Verhalten. */
+
+/* ---- Branding: der App-Name "SNES Collect" ersetzt "Projekt SNES". ---- */
+
+.title-row h1::after {
+  content: "SNES Collect";
+}
+
+.version-badge::after {
+  content: "v1.0.0";
+}
+
+.brand p {
+  font-size: 0.78rem;
+  letter-spacing: 0.01em;
+}
+
+/* Markenzeichen folgt dem App-Icon: dunkle Kachel, SNES-Tastenfarben, Lila-Ring. */
+.brand-mark {
+  border-color: rgba(150, 132, 255, 0.42);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(150, 132, 255, 0.16), transparent 70%),
+    linear-gradient(150deg, #1a1c26, #101219);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 0 0 4px rgba(150, 132, 255, 0.08),
+    0 6px 18px rgba(0, 0, 0, 0.4);
+}
+
+.brand-mark span:nth-child(1) {
+  background: #4d9df2;
+}
+
+.brand-mark span:nth-child(2) {
+  background: #4fc463;
+}
+
+.brand-mark span:nth-child(3) {
+  background: #e8474f;
+}
+
+.brand-mark span:nth-child(4) {
+  background: #f5a623;
+}
+
+/* ---- Glättung: ruhigere Flächen, konsistente Radien, weiche Übergänge. ---- */
+
+.panel,
+.stat-card,
+.search-run-card,
+.game-card {
+  border-radius: 16px;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.search-result {
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.game-card:hover,
+.search-result:hover {
+  border-color: var(--border-bright);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.32);
+}
+
+.primary-button,
+.secondary-button,
+.danger-button,
+.icon-button,
+.file-button,
+.tab {
+  transition:
+    transform 140ms ease,
+    border-color 140ms ease,
+    background 140ms ease,
+    color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.primary-button:active,
+.secondary-button:active,
+.danger-button:active,
+.icon-button:active,
+.file-button:active {
+  transform: scale(0.97);
+}
+
+/* Tabs als weiche Pillen mit erhaltener Akzentlinie. */
+.tabs {
+  gap: 6px;
+  padding-bottom: 8px;
+}
+
+.tab {
+  min-width: 0;
+  flex: 1 1 0;
+  padding: 10px 16px 12px;
+  border-radius: 12px;
+}
+
+.tab:hover {
+  background: rgba(150, 132, 255, 0.07);
+}
+
+.tab.is-active {
+  background: rgba(150, 132, 255, 0.12);
+}
+
+.tab::after {
+  right: 16px;
+  bottom: 2px;
+  left: 16px;
+}
+
+/* Eingabefelder mit sanfter Fokusfläche statt hartem Sprung. */
+input,
+select,
+textarea {
+  transition: border-color 140ms ease, background 140ms ease;
+}
+
+/* ---- PWA/Standalone: installierte App fühlt sich nativ an. ---- */
+
+html {
+  overscroll-behavior-y: none;
+}
+
+body {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@media (display-mode: standalone) {
+  html {
+    -webkit-touch-callout: none;
+  }
+
+  .sticky-shell {
+    background: rgba(9, 10, 15, 0.94);
+  }
+}
+
+/* Bewegung respektiert Systemeinstellung. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .panel,
+  .stat-card,
+  .search-run-card,
+  .game-card,
+  .search-result,
+  .primary-button,
+  .secondary-button,
+  .danger-button,
+  .icon-button,
+  .file-button,
+  .tab,
+  input,
+  select,
+  textarea {
+    transition: none;
+  }
+
+  .primary-button:active,
+  .secondary-button:active,
+  .danger-button:active,
+  .icon-button:active,
+  .file-button:active,
+  .primary-button:hover {
+    transform: none;
+  }
+}

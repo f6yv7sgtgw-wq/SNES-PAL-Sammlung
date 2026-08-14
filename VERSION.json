@@ -1,7 +1,7 @@
 {
-  "product": "Projekt SNES",
-  "version": "0.3.5.3",
-  "release_date": "2026-08-10",
+  "product": "SNES Collect",
+  "version": "1.0.0",
+  "release_date": "2026-08-14",
   "catalog_games": 530,
   "cover_images": 529,
   "available_price_values": 2647,
@@ -13,6 +13,15 @@
   "parser_tested_build": "gp-122-20260808-4",
   "marketplace_sources": ["kleinanzeigen"],
   "search_scope": "Germany-wide shipping",
+  "pwa": {
+    "app_name": "SNES Collect",
+    "manifest": "manifest.webmanifest",
+    "service_worker": "sw.js",
+    "service_worker_strategy": "network-first with cache fallback only when offline",
+    "service_worker_cache": "snes-collect-1.0.0",
+    "icons": ["icons/icon-180.png", "icons/icon-192.png", "icons/icon-512.png", "icons/icon-512-maskable.png", "icons/favicon-64.png"],
+    "ios": ["apple-mobile-web-app-capable", "black-translucent status bar", "apple-touch-icon 180px", "safe-area insets"]
+  },
   "traffic_light": {
     "green": "below reference through 10 percent above reference",
     "yellow": "11 through 25 percent above reference",
@@ -38,7 +47,6 @@
     "packaging_without_game_or_module": "discard"
   },
   "storage": "indexeddb-search-v0353; localstorage-collection-v2",
-  "search_cache_reset": "0.3.5.3 starts a new IndexedDB search cache because older stored results may contain accessory-only or misclassified condition results",
   "collection_schema": {
     "version": 2,
     "components": ["module", "box", "manual"],
@@ -64,6 +72,8 @@
     "preference_storage": "localstorage"
   },
   "ui": {
+    "brand": "SNES Collect name, icon-matched brand mark and app icon set",
+    "polish": "1.0 layer: unified radii, soft transitions, pill tabs, standalone refinements, reduced-motion support",
     "mobile_horizontal_overflow": "forbidden",
     "financial_value_mobile_layout": "stack below label when necessary",
     "responsive_numeric_scaling": true,

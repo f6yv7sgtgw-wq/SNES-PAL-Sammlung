@@ -1,0 +1,18 @@
+{
+  "name": "SNES Collect",
+  "short_name": "SNES Collect",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#090a0f",
+  "theme_color": "#090a0f",
+  "lang": "de",
+  "description": "SNES Collect – Sammlungsmanager für 530 europäische SNES-PAL-Spiele mit Online-Richtwerten und Kleinanzeigen-Suche.",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

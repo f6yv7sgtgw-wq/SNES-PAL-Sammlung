@@ -6,13 +6,26 @@
     <meta name="theme-color" content="#090a0f" />
     <meta
       name="description"
-      content="Projekt SNES – Sammlungsmanager für 530 europäische SNES-PAL-Spiele mit Online-Richtwerten und Kleinanzeigen-Suche."
+      content="SNES Collect – Sammlungsmanager für 530 europäische SNES-PAL-Spiele mit Online-Richtwerten und Kleinanzeigen-Suche."
     />
-    <link rel="icon" href="%BASE_URL%favicon.svg" />
-    <title>Projekt SNES · v0.3.5.3</title>
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="SNES Collect" />
+    <link rel="icon" type="image/png" sizes="64x64" href="%BASE_URL%icons/favicon-64.png" />
+    <link rel="apple-touch-icon" href="%BASE_URL%icons/icon-180.png" />
+    <link rel="manifest" href="%BASE_URL%manifest.webmanifest" />
+    <title>SNES Collect · v1.0.0</title>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/main.tsx"></script>
+    <script>
+      if ("serviceWorker" in navigator) {
+        addEventListener("load", () => {
+          navigator.serviceWorker.register("%BASE_URL%sw.js").catch(() => {});
+        });
+      }
+    </script>
   </body>
 </html>

@@ -1,13 +1,28 @@
-# Projekt SNES – Version 0.3.5.3
+# SNES Collect – Version 1.0.0
 
-Ein für iPhone und Desktop optimierter Sammlungsmanager für europäische
-Super-Nintendo-Spiele.
+**SNES Collect** ist ein für iPhone und Desktop optimierter Sammlungsmanager
+für europäische Super-Nintendo-Spiele – ab 1.0.0 als installierbare PWA mit
+eigenem App-Icon.
 
 - [Projektseite](https://snes-pal-sammlung.jnldc.chatgpt.site)
 - [GitHub Pages](https://f6yv7sgtgw-wq.github.io/SNES-PAL-Sammlung/)
 
+## Installation als App (PWA)
+
+- **iPhone/iPad:** Seite in Safari öffnen → Teilen → **Zum Home-Bildschirm**.
+  SNES Collect startet dann im Vollbild mit eigenem Icon und
+  schwarz-transluzenter Statusleiste.
+- **Android/Desktop-Chrome:** über den Installationshinweis bzw.
+  „App installieren“ im Browser-Menü.
+- Der Service Worker arbeitet network-first: Updates erscheinen sofort nach
+  einem Deploy, die App-Shell und zuletzt geladene Inhalte bleiben offline
+  verfügbar.
+
 ## Funktionen
 
+- installierbare PWA mit App-Icon, Standalone-Modus und Offline-Fallback
+- geglättete 1.0-Oberfläche: einheitliche Radien, weiche Übergänge,
+  Pillen-Tabs und Druck-Feedback, `prefers-reduced-motion` wird respektiert
 - vollständiger Katalog mit 530 SNES-PAL-Spielen
 - Cover, Erscheinungsjahr, Entwickler, Herausgeber und Seltenheitsbewertung
 - aktuelle Online-Richtwerte für Modul, OVP/CIB, Neu/Sealed, Box und Anleitung
@@ -37,6 +52,16 @@ Super-Nintendo-Spiele.
 - kompakte 36-Pixel-Aktionsbuttons in Suchkarten auf Mobilgeräten
 - JSON-Datensicherung mit Export und Import
 - dunkle, touchfreundliche Oberfläche
+
+## Version 1.0.0: SNES Collect
+
+1.0.0 macht aus Projekt SNES die fertige App **SNES Collect**. Der neue Name
+erscheint im Header, im Seitentitel und auf dem Homescreen; das neue App-Icon
+(SNES-Modul mit Checkliste und Fortschrittsring) liegt in allen benötigten
+Größen bei. Web-App-Manifest, Service Worker und iOS-Metadaten machen den
+GitHub-Pages-Auftritt installierbar. Die Sammlungs-, Katalog- und Suchlogik aus
+0.3.5.3 bleibt unverändert, ebenso Sammlung, Kaufpreise und Suchspeicher.
+Details in [`docs/VERSION-1.0.md`](docs/VERSION-1.0.md).
 
 ## Zubehörfilter 0.3.5.3
 
@@ -216,6 +241,7 @@ und Build bei jedem Push auf `main` erneut aus.
 
 ## Versionen
 
+- [`docs/VERSION-1.0.md`](docs/VERSION-1.0.md) – SNES Collect: PWA, App-Icon und geglättete Oberfläche
 - [`docs/VERSION-0.3.5.3.md`](docs/VERSION-0.3.5.3.md) – Zubehörfilter und strengere Zustandszuordnung
 - [`docs/VERSION-0.3.5.2.md`](docs/VERSION-0.3.5.2.md) – zustandsabhängiger Preisvergleich und konservativer Modul-Fallback
 - [`docs/VERSION-0.3.5.1.md`](docs/VERSION-0.3.5.1.md) – Mobile-Hotfix für kompakte Suchkarten und Aktionsbuttons

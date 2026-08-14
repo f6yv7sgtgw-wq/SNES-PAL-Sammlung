@@ -45,15 +45,15 @@ export default function ProjectSnesManager({
     }
 
     const heading = document.querySelector<HTMLHeadingElement>(".title-row h1");
-    if (heading) heading.textContent = "Projekt SNES";
+    if (heading) heading.textContent = "SNES Collect";
     const badge = document.querySelector<HTMLElement>(".version-badge");
-    if (badge) badge.textContent = "v0.3.5.3";
+    if (badge) badge.textContent = "v1.0.0";
   }, [games]);
 
   return (
     <>
-      <span hidden data-project-version="0.3.5.3">
-        v0.3.5.3
+      <span hidden data-project-version="1.0.0">
+        v1.0.0
       </span>
       <CollectionManager games={games} priceMeta={priceMeta} />
     </>
